@@ -1,4 +1,4 @@
-Package: uk.co.compucorp.odoocivicrmsync
+Package: uk.co.compucorp.odoosync
 Copyright (C)
 Licensed under the GNU Affero Public License 3.0 (below).
 

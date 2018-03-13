@@ -1,12 +1,12 @@
 <?php
 
 // AUTO-GENERATED FILE -- Civix may overwrite any changes made to this file
-use CRM_Odoocivicrmsync_ExtensionUtil as E;
+use CRM_Odoosync_ExtensionUtil as E;
 
 /**
  * Base class which provides helpers to execute upgrade logic
  */
-class CRM_Odoocivicrmsync_Upgrader_Base {
+class CRM_Odoosync_Upgrader_Base {
 
   /**
    * @var varies, subclass of ttis
@@ -45,8 +45,8 @@ class CRM_Odoocivicrmsync_Upgrader_Base {
   static public function instance() {
     if (!self::$instance) {
       // FIXME auto-generate
-      self::$instance = new CRM_Odoocivicrmsync_Upgrader(
-        'uk.co.compucorp.odoocivicrmsync',
+      self::$instance = new CRM_Odoosync_Upgrader(
+        'uk.co.compucorp.odoosync',
         realpath(__DIR__ . '/../../../')
       );
     }
@@ -60,7 +60,7 @@ class CRM_Odoocivicrmsync_Upgrader_Base {
    * task-context; otherwise, this will be non-reentrant.
    *
    * @code
-   * CRM_Odoocivicrmsync_Upgrader_Base::_queueAdapter($ctx, 'methodName', 'arg1', 'arg2');
+   * CRM_Odoosync_Upgrader_Base::_queueAdapter($ctx, 'methodName', 'arg1', 'arg2');
    * @endcode
    */
   static public function _queueAdapter() {
