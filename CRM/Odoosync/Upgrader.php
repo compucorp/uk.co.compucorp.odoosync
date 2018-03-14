@@ -79,17 +79,44 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
   }
 
   /**
-   *  Initialize contacts sync information
+   *  Initializes contacts sync information
    *  Set custom field "action_to_sync" and "sync_status" default values
+   *
+   * @throws \CiviCRM_API3_Exception
    */
   private function initializeContactsSyncInformation() {
+    $defaultAction = $this->getDefaultOptionValue('odoo_partner_action_to_sync');
+    $defaultStatus = $this->getDefaultOptionValue('odoo_sync_status');
+
     $query = "
       INSERT INTO odoo_partner_sync_information(entity_id, action_to_sync, sync_status)
-      SELECT id, 1, 1 FROM civicrm_contact
+      SELECT id, %1 , %2 FROM civicrm_contact
       WHERE id NOT IN (SELECT entity_id FROM odoo_partner_sync_information);
       ";
 
-    CRM_Core_DAO::executeQuery($query);
+    CRM_Core_DAO::executeQuery($query, [
+      1 => [$defaultAction, 'Integer'],
+      2 => [$defaultStatus, 'Integer'],
+    ]);
+  }
+
+  /**
+   * Gets default value in the option group
+   *
+   * @param $optionGroupName
+   *
+   * @return int
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function getDefaultOptionValue($optionGroupName) {
+    $value = civicrm_api3('OptionValue', 'get', [
+      'sequential' => 1,
+      'return' => ["value"],
+      'option_group_id' => $optionGroupName,
+      'is_default' => 1,
+    ]);
+
+    return (int) $value;
   }
 
 }
