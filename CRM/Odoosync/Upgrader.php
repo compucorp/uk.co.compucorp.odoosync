@@ -11,7 +11,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    *
    */
   public function postInstall() {
-    $this->updateContactCustomData();
+    $this->initializeContactsSyncInformation();
   }
 
   /**
@@ -25,7 +25,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
   }
 
   /**
-   * Delete all option group from ext
+   * Deletes all the option groups created by the extension
    *
    * @throws \CiviCRM_API3_Exception
    */
@@ -38,7 +38,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
   }
 
   /**
-   * Delete all custom group from ext
+   * Deletes all the custom groups created by the extension
    *
    * @throws \CiviCRM_API3_Exception
    */
@@ -51,9 +51,9 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
   }
 
   /**
-   * Delete option group from ext
+   * Deletes the specified option group
    *
-   * @param $optionGroupName
+   * @param string $optionGroupName
    *
    * @throws \CiviCRM_API3_Exception
    */
@@ -65,9 +65,9 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
   }
 
   /**
-   * Delete custom group from ext
+   * Deletes the specified custom group
    *
-   * @param $customGroupName
+   * @param string $customGroupName
    *
    * @throws \CiviCRM_API3_Exception
    */
@@ -79,9 +79,10 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
   }
 
   /**
-   *  Update contact custom data
+   *  Initialize contacts sync information
+   *  Set custom field "action_to_sync" and "sync_status" default values
    */
-  private function updateContactCustomData() {
+  private function initializeContactsSyncInformation() {
     $query = "
       INSERT INTO odoo_partner_sync_information(entity_id, action_to_sync, sync_status)
       SELECT id, 1, 1 FROM civicrm_contact
