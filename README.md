@@ -1,1 +1,1 @@
-# Oddo CiviCRM Sync
+# Oddo Sync
