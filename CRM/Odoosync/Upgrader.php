@@ -116,7 +116,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
       'is_default' => 1,
     ]);
 
-    return (int) $value;
+    return (int) $value['values'][0]['value'];
   }
 
 }
