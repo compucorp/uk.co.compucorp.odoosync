@@ -7,8 +7,16 @@
 class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
 
   /**
+   * @throws \CiviCRM_API3_Exception
+   */
+  public function install() {
+    $this->createSyncErrorMessageTemplate();
+  }
+
+  /**
    * This hook is called immediately after an extension is installed.
    *
+   * @throws \CiviCRM_API3_Exception
    */
   public function postInstall() {
     $this->initializeContactsSyncInformation();
@@ -20,6 +28,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    * @throws \CiviCRM_API3_Exception
    */
   public function uninstall() {
+    $this->deleteSyncErrorMessageTemplate();
     $this->deleteExtensionOptionGroups();
     $this->deleteExtensionCustomGroups();
   }
@@ -30,11 +39,23 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    * @throws \CiviCRM_API3_Exception
    */
   private function deleteExtensionOptionGroups() {
-    $optionGroupsToDelete = ['odoo_sync_status', 'odoo_partner_action_to_sync', 'odoo_invoice_action_to_sync'];
+    $optionGroupsToDelete = ['msg_tpl_workflow_odoo_sync', 'odoo_sync_status', 'odoo_partner_action_to_sync', 'odoo_invoice_action_to_sync'];
 
     foreach ($optionGroupsToDelete as $optionGroupName) {
       $this->deleteOptionGroup($optionGroupName);
     }
+  }
+
+  /**
+   * Deletes 'CiviCRM-Odoo Sync Error Report' message template
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function deleteSyncErrorMessageTemplate() {
+    civicrm_api3('MessageTemplate', 'get', [
+      'msg_title' => "CiviCRM Odoo Sync Error Report",
+      'api.MessageTemplate.delete' => ['id' => '$value.id'],
+    ]);
   }
 
   /**
@@ -117,6 +138,50 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
     ]);
 
     return (int) $value['values'][0]['value'];
+  }
+
+  /**
+   * Creates 'CiviCRM-Odoo Sync Error Report' message template
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function createSyncErrorMessageTemplate() {
+    $templateFilePath = $this->extensionDir . "/templates/CRM/Odoosync/DefaultMessageTemplates/OdooSyncErrorReport.html";
+
+    $messageHtml = '';
+    if (file_exists($templateFilePath)) {
+      $messageHtml = file_get_contents($templateFilePath);
+    }
+    else {
+      CRM_Core_Session::setStatus(ts('Creating message template'), ts("Couldn't find default template at '$templateFilePath'"), 'alert');
+    }
+
+    $workflowId = $this->getSyncErrorTemplateWorkflowID();
+
+    civicrm_api3('MessageTemplate', 'create', [
+      'msg_title' => "CiviCRM Odoo Sync Error Report",
+      'msg_subject' => ts("CiviCRM Odoo Sync Error Report"),
+      'is_reserved' => 0,
+      'msg_html' => $messageHtml,
+      'is_active' => 1,
+      'msg_text' => 'N/A',
+      'workflow_id' => $workflowId
+    ]);
+  }
+
+  /**
+   * Gets workflow id related to the message template
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function getSyncErrorTemplateWorkflowID() {
+    $id = civicrm_api3('OptionValue', 'getvalue', [
+      'return' => "id",
+      'option_group' => 'msg_tpl_workflow_odoo_sync',
+      'name' => 'civicrm_odoo_sync_error_report',
+    ]);
+
+    return (int) $id;
   }
 
 }

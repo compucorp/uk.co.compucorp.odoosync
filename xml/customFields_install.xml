@@ -2,6 +2,27 @@
 <CustomData>
     <OptionGroups>
         <OptionGroup>
+            <name>msg_tpl_workflow_odoo_sync</name>
+            <title>Message Template Workflow for Odoo Sync</title>
+            <is_reserved>1</is_reserved>
+            <is_active>1</is_active>
+        </OptionGroup>
+    </OptionGroups>
+    <OptionValues>
+        <OptionValue>
+            <name>civicrm_odoo_sync_error_report</name>
+            <label>CiviCRM Odoo Sync Error Report</label>
+            <value>1</value>
+            <is_default>1</is_default>
+            <weight>1</weight>
+            <is_reserved>1</is_reserved>
+            <is_active>1</is_active>
+            <option_group_name>msg_tpl_workflow_odoo_sync</option_group_name>
+            <description>CiviCRM Odoo Sync Error Report</description>
+        </OptionValue>
+    </OptionValues>
+    <OptionGroups>
+        <OptionGroup>
             <name>odoo_sync_status</name>
             <title>Sync status</title>
             <is_reserved>1</is_reserved>
@@ -173,6 +194,7 @@
             <custom_group_name>odoo_invoice_sync_information</custom_group_name>
             <data_type>Date</data_type>
             <html_type>Select Date</html_type>
+            <date_format>mm/dd/yy</date_format>
             <is_searchable>1</is_searchable>
             <is_view>1</is_view>
             <is_required>0</is_required>
@@ -242,6 +264,7 @@
             <custom_group_name>odoo_invoice_sync_information</custom_group_name>
             <data_type>Date</data_type>
             <html_type>Select Date</html_type>
+            <date_format>mm/dd/yy</date_format>
             <is_searchable>1</is_searchable>
             <is_view>1</is_view>
             <is_required>0</is_required>
@@ -255,6 +278,7 @@
             <custom_group_name>odoo_invoice_sync_information</custom_group_name>
             <data_type>Date</data_type>
             <html_type>Select Date</html_type>
+            <date_format>mm/dd/yy</date_format>
             <is_searchable>1</is_searchable>
             <is_view>1</is_view>
             <is_required>0</is_required>
@@ -311,6 +335,7 @@
             <custom_group_name>odoo_partner_sync_information</custom_group_name>
             <data_type>Date</data_type>
             <html_type>Select Date</html_type>
+            <date_format>mm/dd/yy</date_format>
             <is_searchable>1</is_searchable>
             <is_view>1</is_view>
             <is_required>0</is_required>
@@ -367,6 +392,7 @@
             <custom_group_name>odoo_partner_sync_information</custom_group_name>
             <data_type>Date</data_type>
             <html_type>Select Date</html_type>
+            <date_format>mm/dd/yy</date_format>
             <is_searchable>1</is_searchable>
             <is_view>1</is_view>
             <is_required>0</is_required>
@@ -380,6 +406,7 @@
             <custom_group_name>odoo_partner_sync_information</custom_group_name>
             <data_type>Date</data_type>
             <html_type>Select Date</html_type>
+            <date_format>mm/dd/yy</date_format>
             <is_searchable>1</is_searchable>
             <is_view>1</is_view>
             <is_required>0</is_required>
