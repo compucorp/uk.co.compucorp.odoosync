@@ -7,17 +7,16 @@
 class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
 
   /**
-   * This hook call when extension install
-   *
    * @throws \CiviCRM_API3_Exception
    */
   public function install() {
-    $this->installMessageTemplate();
+    $this->createSyncErrorMessageTemplate();
   }
 
   /**
    * This hook is called immediately after an extension is installed.
    *
+   * @throws \CiviCRM_API3_Exception
    */
   public function postInstall() {
     $this->initializeContactsSyncInformation();
@@ -29,7 +28,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    * @throws \CiviCRM_API3_Exception
    */
   public function uninstall() {
-    $this->deleteMessageTemplate();
+    $this->deleteSyncErrorMessageTemplate();
     $this->deleteExtensionOptionGroups();
     $this->deleteExtensionCustomGroups();
   }
@@ -45,6 +44,18 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
     foreach ($optionGroupsToDelete as $optionGroupName) {
       $this->deleteOptionGroup($optionGroupName);
     }
+  }
+
+  /**
+   * Deletes 'CiviCRM-Odoo Sync Error Report' message template
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function deleteSyncErrorMessageTemplate() {
+    civicrm_api3('MessageTemplate', 'get', [
+      'msg_title' => "CiviCRM Odoo Sync Error Report",
+      'api.MessageTemplate.delete' => ['id' => '$value.id'],
+    ]);
   }
 
   /**
@@ -130,23 +141,22 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
   }
 
   /**
-   * Install default message template
+   * Creates 'CiviCRM-Odoo Sync Error Report' message template
    *
    * @throws \CiviCRM_API3_Exception
    */
-  private function installMessageTemplate() {
-
-    $filePath = $this->extensionDir . "/templates/CRM/Odoosync/DefaultMessageTemplates/OdooSyncErrorReport.html";
+  private function createSyncErrorMessageTemplate() {
+    $templateFilePath = $this->extensionDir . "/templates/CRM/Odoosync/DefaultMessageTemplates/OdooSyncErrorReport.html";
 
     $messageHtml = '';
-    if (file_exists($filePath)) {
-      $messageHtml = file_get_contents($filePath);
+    if (file_exists($templateFilePath)) {
+      $messageHtml = file_get_contents($templateFilePath);
     }
     else {
-      CRM_Core_Session::setStatus(ts('Creating message template'), ts("Couldn't find default template at '$filePath'"), 'alert');
+      CRM_Core_Session::setStatus(ts('Creating message template'), ts("Couldn't find default template at '$templateFilePath'"), 'alert');
     }
 
-    $workflowId = $this->getWorkflowId();
+    $workflowId = $this->getSyncErrorTemplateWorkflowID();
 
     civicrm_api3('MessageTemplate', 'create', [
       'msg_title' => "CiviCRM Odoo Sync Error Report",
@@ -164,51 +174,14 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    *
    * @throws \CiviCRM_API3_Exception
    */
-  private function getWorkflowId() {
+  private function getSyncErrorTemplateWorkflowID() {
     $id = civicrm_api3('OptionValue', 'getvalue', [
       'return' => "id",
       'option_group' => 'msg_tpl_workflow_odoo_sync',
-      'name' => 'civi_crm_odoo_sync_error_report',
+      'name' => 'civicrm_odoo_sync_error_report',
     ]);
 
     return (int) $id;
-  }
-
-  /**
-   * Deletes the message template created by the extension
-   *
-   * @throws \CiviCRM_API3_Exception
-   */
-  private function deleteMessageTemplate() {
-
-    $messageTemplateId = $this->getMessageTemplateIdByTitle("CiviCRM Odoo Sync Error Report");
-
-    if ($messageTemplateId) {
-      civicrm_api3('MessageTemplate', 'delete', [
-        'id' => $messageTemplateId,
-      ]);
-    }
-  }
-
-  /**
-   * Gets message template id by title
-   *
-   * @param string $title
-   *
-   * @return bool|int
-   */
-  private function getMessageTemplateIdByTitle($title) {
-    try {
-      $messageTemplateId = civicrm_api3('MessageTemplate', 'getvalue', [
-        'msg_title' => $title,
-        'return' => "id"
-      ]);
-
-      return (int) $messageTemplateId;
-    }
-    catch (CiviCRM_API3_Exception $e) {
-      return FALSE;
-    }
   }
 
 }
