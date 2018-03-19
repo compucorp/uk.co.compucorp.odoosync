@@ -122,3 +122,20 @@ function odoosync_civicrm_angularModules(&$angularModules) {
 function odoosync_civicrm_alterSettingsFolders(&$metaDataFolders = NULL) {
   _odoosync_civix_civicrm_alterSettingsFolders($metaDataFolders);
 }
+
+/**
+ * Implements hook_civicrm_navigationMenu().
+ *
+ */
+function odoosync_civicrm_navigationMenu(&$menu) {
+
+  $menuItem = [
+    'name'       => ts('CiviCRM Odoo Sync Configuration'),
+    'url'        => 'civicrm/admin/odoosync/configuration',
+    'permission' => 'administer CiviCRM',
+    'operator'   => NULL,
+    'separator'  => NULL,
+  ];
+
+  _odoosync_civix_insert_navigation_menu($menu, 'Administer/', $menuItem);
+}
