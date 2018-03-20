@@ -12,22 +12,33 @@ class CRM_Odoosync_Form_Configurations extends CRM_Core_Form {
   /**
    * Contains array of fields, which config Odoo Civicrm Sync Expansion
    *
-   * @var string[]
+   * @var array
    */
-  private $settingFields = [];
+  private $settingFields;
+
+  /**
+   * CRM_Odoosync_Form_Configurations constructor.
+   *
+   * @param $state
+   * @param $action
+   * @param $method
+   * @param $name
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  public function __construct($state, $action, $method, $name) {
+    parent::__construct($state, $action, $method, $name);
+    $this->setSettingFields();
+  }
 
   /**
    * Builds the form object.
-   *
-   * @throws \CiviCRM_API3_Exception
    */
   public function buildQuickForm() {
     $configElements = [];
     CRM_Utils_System::setTitle(E::ts('CiviCRM Odoo Sync Configuration'));
 
-    $settingFields  = $this->getSettingFields();
-
-    foreach ($settingFields as $name => $config) {
+    foreach ($this->settingFields as $name => $config) {
       $this->add(
         $config['html_type'],
         $name,
@@ -52,7 +63,46 @@ class CRM_Odoosync_Form_Configurations extends CRM_Core_Form {
       ],
     ]);
 
-    $this->assign('configElements', $configElements);;
+    $this->assign('configElements', $configElements);
+  }
+
+  /**
+   * Sets the configurations allowed to be set on this form.
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  public function setSettingFields() {
+    $this->settingFields = civicrm_api3('setting', 'getfields', [
+      'filters' => [ 'group' => 'odoosync'],
+    ])['values'];
+
+    if (!is_array($this->settingFields)) {
+      $this->settingFields = [];
+    }
+  }
+
+  /**
+   * Sets defaults for form.
+   *
+   * @see CRM_Core_Form::setDefaultValues()
+   * @throws \CiviCRM_API3_Exception
+   */
+  public function setDefaultValues() {
+    $defaults = [];
+    $domainID = CRM_Core_Config::domainID();
+
+    $currentValues = civicrm_api3('setting', 'get',
+      ['return' => array_keys($this->settingFields)]
+    );
+
+    //sets fields values from database
+    foreach ($currentValues['values'][$domainID] as $name => $value) {
+      $defaults[$name] = $value;
+    }
+
+    $defaults = $this->setDefaultsToEmptyFields($defaults);
+
+    return $defaults;
   }
 
   /**
@@ -68,12 +118,11 @@ class CRM_Odoosync_Form_Configurations extends CRM_Core_Form {
       )
     );
 
-    $settingFields = $this->getSettingFields();
     $submittedValues = $this->exportValues();
-    $valuesToSave = array_intersect_key($submittedValues, $settingFields);
+    $valuesToSave = array_intersect_key($submittedValues, $this->settingFields);
 
     //if empty submitted value, set default data
-    foreach ($settingFields as $key => $val) {
+    foreach ($this->settingFields as $key => $val) {
       $isEmptySubmittedValue = !array_key_exists($val['name'], $valuesToSave) || empty($valuesToSave[$val['name']]);
       if ($isEmptySubmittedValue && !empty($val['default'])) {
         $valuesToSave[$val['name']] = $val['default'];
@@ -81,59 +130,6 @@ class CRM_Odoosync_Form_Configurations extends CRM_Core_Form {
     }
 
     civicrm_api3('setting', 'create', $valuesToSave);
-  }
-
-  /**
-   * Gets the configurations allowed to be set on this form.
-   *
-   * @return array
-   * @throws \CiviCRM_API3_Exception
-   */
-  private function getSettingFields() {
-    if (!empty($this->settingFields)) {
-      return $this->settingFields;
-    }
-
-    $this->settingFields = self::getSettingValues();
-
-    return $this->settingFields;
-  }
-
-  /**
-   * Gets setting values used by the extension
-   *
-   * @return mixed
-   * @throws \CiviCRM_API3_Exception
-   */
-  public static function getSettingValues() {
-    return civicrm_api3('setting', 'getfields', [
-      'filters' => [ 'group' => 'odoosync'],
-    ])['values'];
-  }
-
-  /**
-   * Sets defaults for form.
-   *
-   * @see CRM_Core_Form::setDefaultValues()
-   * @throws \CiviCRM_API3_Exception
-   */
-  public function setDefaultValues() {
-    $defaults = [];
-    $domainID = CRM_Core_Config::domainID();
-    $settingFields = $this->getSettingFields();
-
-    $currentValues = civicrm_api3('setting', 'get',
-      ['return' => array_keys($settingFields)]
-    );
-
-    //sets fields values from database
-    foreach ($currentValues['values'][$domainID] as $name => $value) {
-      $defaults[$name] = $value;
-    }
-
-    $defaults = $this->setDefaultsToEmptyFields($defaults);
-
-    return $defaults;
   }
 
   /**
@@ -155,7 +151,9 @@ class CRM_Odoosync_Form_Configurations extends CRM_Core_Form {
    * @throws \CiviCRM_API3_Exception
    */
   public static function validateRules($values) {
-    $settingInputs = self::getSettingValues();
+    $settingInputs = civicrm_api3('setting', 'getfields', [
+      'filters' => [ 'group' => 'odoosync'],
+    ])['values'];
 
     foreach ($settingInputs as $key => $setting) {
       $rule = CRM_Utils_Array::value('validate', $setting, []);
@@ -187,19 +185,15 @@ class CRM_Odoosync_Form_Configurations extends CRM_Core_Form {
     return empty($errors) ? TRUE : $errors;
   }
 
-
   /**
    * If value of fields is empty, sets default value from setting
    *
    * @param array $defaults
    *
    * @return mixed
-   * @throws \CiviCRM_API3_Exception
    */
   private function setDefaultsToEmptyFields($defaults) {
-    $settingFields = $this->getSettingFields();
-
-    foreach ($settingFields as $field) {
+    foreach ($this->settingFields as $field) {
       $fieldName = $field['name'];
       if (empty($defaults[$fieldName]) && !empty($field['default'])) {
         $defaults[$fieldName] = $field['default'];
