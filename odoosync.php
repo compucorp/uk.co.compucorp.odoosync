@@ -139,3 +139,25 @@ function odoosync_civicrm_navigationMenu(&$menu) {
 
   _odoosync_civix_insert_navigation_menu($menu, 'Administer/', $menuItem);
 }
+
+/**
+ * Implements hook_civicrm_postProcess().
+ *
+ * @throws \CiviCRM_API3_Exception
+ */
+function odoosync_civicrm_postProcess($formName, &$form) {
+  $formAction = $form->getAction();
+
+  if ($formName == "CRM_Contact_Form_Task_Delete" && $formAction == CRM_Core_Action::NONE) {
+    $contactIds = $form->getVar('_contactIds');
+    foreach ($contactIds as $contactId) {
+      CRM_Odoosync_Utils_CustomData::updateContactData($contactId);
+    }
+  }
+
+  if ($formName == "CRM_Contact_Form_Contact" && ($formAction == CRM_Core_Action::UPDATE || $formAction == CRM_Core_Action::ADD)) {
+    $contactId = (int) $form->getVar('_contactId');
+    CRM_Odoosync_Utils_CustomData::updateContactData($contactId);
+  }
+
+}
