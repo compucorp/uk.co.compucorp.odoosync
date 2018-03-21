@@ -3,19 +3,23 @@
 class CRM_Odoosync_Utils_CustomData {
 
   /**
-   * Save custom field data to contact
+   * Gets option value by OptionGroup name and name OptionValue
    *
-   * @param int $contactId
-   * @param int $customFieldId
-   * @param mixed $value
+   * @param $optionGroupName
+   * @param $name
    *
+   * @return int
    * @throws \CiviCRM_API3_Exception
    */
-  public static function saveCustomFieldDataToContact($contactId, $customFieldId, $value) {
-    civicrm_api3('Contact', 'create', [
-      'id' => $contactId,
-      'custom_' . $customFieldId => $value,
+  public static function getOptionValueByName($optionGroupName, $name) {
+    $value = civicrm_api3('OptionValue', 'get', [
+      'sequential' => 1,
+      'return' => ["value"],
+      'option_group_id' => $optionGroupName,
+      'name' => $name,
     ]);
+
+    return (int) $value['values'][0]['value'];
   }
 
   /**
@@ -57,25 +61,27 @@ class CRM_Odoosync_Utils_CustomData {
   }
 
   /**
-   * Update contact custom odoo fields
+   * Update contact sync information
    *
    * @param $contactId
    *
+   * @param $actionToSync
+   *
    * @throws \CiviCRM_API3_Exception
    */
-  public static function updateContactData($contactId) {
+  public static function updateSyncInformationContact($contactId, $actionToSync) {
     $date = new DateTime();
     $dateFormat = $date->format("Y-m-d H:i:s");
-    $defaultAction = CRM_Odoosync_Utils_CustomData::getDefaultOptionValue('odoo_partner_action_to_sync');
-    $defaultStatus = CRM_Odoosync_Utils_CustomData::getDefaultOptionValue('odoo_sync_status');
+    $createAction = self::getOptionValueByName('odoo_partner_action_to_sync', $actionToSync);
+    $createStatus = self::getOptionValueByName('odoo_sync_status', 'awaiting_sync');
     $syncStatusFieldId = CRM_Odoosync_Utils_CustomData::getCustomFieldId('odoo_partner_sync_information', 'sync_status');
     $actionToSyncFieldId = CRM_Odoosync_Utils_CustomData::getCustomFieldId('odoo_partner_sync_information', 'action_to_sync');
     $actionDateFieldId = CRM_Odoosync_Utils_CustomData::getCustomFieldId('odoo_partner_sync_information', 'action_date');
 
     $param = [
       'id' => $contactId,
-      'custom_' . $syncStatusFieldId => $defaultStatus,
-      'custom_' . $actionToSyncFieldId => $defaultAction,
+      'custom_' . $syncStatusFieldId => $createStatus,
+      'custom_' . $actionToSyncFieldId => $createAction,
       'custom_' . $actionDateFieldId => $dateFormat,
     ];
 

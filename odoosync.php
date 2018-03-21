@@ -151,13 +151,20 @@ function odoosync_civicrm_postProcess($formName, &$form) {
   if ($formName == "CRM_Contact_Form_Task_Delete" && $formAction == CRM_Core_Action::NONE) {
     $contactIds = $form->getVar('_contactIds');
     foreach ($contactIds as $contactId) {
-      CRM_Odoosync_Utils_CustomData::updateContactData($contactId);
+      CRM_Odoosync_Utils_CustomData::updateSyncInformationContact($contactId, 'update');
     }
   }
 
-  if ($formName == "CRM_Contact_Form_Contact" && ($formAction == CRM_Core_Action::UPDATE || $formAction == CRM_Core_Action::ADD)) {
+  if ($formName == "CRM_Contact_Form_Contact") {
     $contactId = (int) $form->getVar('_contactId');
-    CRM_Odoosync_Utils_CustomData::updateContactData($contactId);
+
+    if ($formAction == CRM_Core_Action::ADD) {
+      CRM_Odoosync_Utils_CustomData::updateSyncInformationContact($contactId, 'create');
+    }
+
+    if ($formAction == CRM_Core_Action::UPDATE) {
+      CRM_Odoosync_Utils_CustomData::updateSyncInformationContact($contactId, 'update');
+    }
   }
 
 }
