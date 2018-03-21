@@ -32,6 +32,21 @@ class CRM_Odoosync_Form_Configurations extends CRM_Core_Form {
   }
 
   /**
+   * Sets the configurations allowed to be set on this form.
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  public function setSettingFields() {
+    $this->settingFields = civicrm_api3('setting', 'getfields', [
+      'filters' => [ 'group' => 'odoosync'],
+    ])['values'];
+
+    if (!is_array($this->settingFields)) {
+      $this->settingFields = [];
+    }
+  }
+
+  /**
    * Builds the form object.
    */
   public function buildQuickForm() {
@@ -67,21 +82,6 @@ class CRM_Odoosync_Form_Configurations extends CRM_Core_Form {
   }
 
   /**
-   * Sets the configurations allowed to be set on this form.
-   *
-   * @throws \CiviCRM_API3_Exception
-   */
-  public function setSettingFields() {
-    $this->settingFields = civicrm_api3('setting', 'getfields', [
-      'filters' => [ 'group' => 'odoosync'],
-    ])['values'];
-
-    if (!is_array($this->settingFields)) {
-      $this->settingFields = [];
-    }
-  }
-
-  /**
    * Sets defaults for form.
    *
    * @see CRM_Core_Form::setDefaultValues()
@@ -106,30 +106,21 @@ class CRM_Odoosync_Form_Configurations extends CRM_Core_Form {
   }
 
   /**
-   * Process the form after the input has been submitted and validated.
+   * If value of fields is empty, sets default value from setting
    *
-   * @throws \CiviCRM_API3_Exception
+   * @param array $defaults
+   *
+   * @return mixed
    */
-  public function postProcess() {
-    $this->controller->setDestination(
-      CRM_Utils_System::url(
-        'civicrm/admin/odoosync/configuration',
-        http_build_query(['reset' => 1])
-      )
-    );
-
-    $submittedValues = $this->exportValues();
-    $valuesToSave = array_intersect_key($submittedValues, $this->settingFields);
-
-    //if empty submitted value, set default data
-    foreach ($this->settingFields as $key => $val) {
-      $isEmptySubmittedValue = !array_key_exists($val['name'], $valuesToSave) || empty($valuesToSave[$val['name']]);
-      if ($isEmptySubmittedValue && !empty($val['default'])) {
-        $valuesToSave[$val['name']] = $val['default'];
+  private function setDefaultsToEmptyFields($defaults) {
+    foreach ($this->settingFields as $field) {
+      $fieldName = $field['name'];
+      if (empty($defaults[$fieldName]) && !empty($field['default'])) {
+        $defaults[$fieldName] = $field['default'];
       }
     }
 
-    civicrm_api3('setting', 'create', $valuesToSave);
+    return $defaults;
   }
 
   /**
@@ -186,21 +177,30 @@ class CRM_Odoosync_Form_Configurations extends CRM_Core_Form {
   }
 
   /**
-   * If value of fields is empty, sets default value from setting
+   * Process the form after the input has been submitted and validated.
    *
-   * @param array $defaults
-   *
-   * @return mixed
+   * @throws \CiviCRM_API3_Exception
    */
-  private function setDefaultsToEmptyFields($defaults) {
-    foreach ($this->settingFields as $field) {
-      $fieldName = $field['name'];
-      if (empty($defaults[$fieldName]) && !empty($field['default'])) {
-        $defaults[$fieldName] = $field['default'];
+  public function postProcess() {
+    $this->controller->setDestination(
+      CRM_Utils_System::url(
+        'civicrm/admin/odoosync/configuration',
+        http_build_query(['reset' => 1])
+      )
+    );
+
+    $submittedValues = $this->exportValues();
+    $valuesToSave = array_intersect_key($submittedValues, $this->settingFields);
+
+    //if empty submitted value, set default data
+    foreach ($this->settingFields as $key => $val) {
+      $isEmptySubmittedValue = !array_key_exists($val['name'], $valuesToSave) || empty($valuesToSave[$val['name']]);
+      if ($isEmptySubmittedValue && !empty($val['default'])) {
+        $valuesToSave[$val['name']] = $val['default'];
       }
     }
 
-    return $defaults;
+    civicrm_api3('setting', 'create', $valuesToSave);
   }
 
 }
