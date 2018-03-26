@@ -40,21 +40,14 @@ class CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater {
    */
   private $awaitingSyncOptionValueId;
 
-  /**
-   * Sets contact custom fields id: sync_status, action_to_sync, action_date
-   * Sets current data time
-   *
-   * CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater constructor.
-   *
-   * @throws \CiviCRM_API3_Exception
-   */
   public function __construct() {
-    $date = new DateTime();
-    $this->currentDateTime = $date->format('Y-m-d H:i:s');
+    $this->currentDateTime = (new DateTime())->format('Y-m-d H:i:s');
+
     $this->syncStatusFieldId = $this->getSyncInfoCustomFieldId('sync_status');
     $this->actionToSyncFieldId = $this->getSyncInfoCustomFieldId('action_to_sync');
     $this->actionDateFieldId = $this->getSyncInfoCustomFieldId('action_date');
     $this->awaitingSyncOptionValueId = $this->getOptionValueID('odoo_sync_status', 'awaiting_sync');
+
   }
 
   /**
@@ -64,7 +57,6 @@ class CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater {
    * @param string $name
    *
    * @return int
-   * @throws \CiviCRM_API3_Exception
    */
   private function getSyncInfoCustomFieldId($name) {
     $customFieldId = civicrm_api3('CustomField', 'getvalue', [
@@ -84,7 +76,6 @@ class CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater {
    * @param string $optionValueName
    *
    * @return int
-   * @throws \CiviCRM_API3_Exception
    */
   private function getOptionValueID($optionGroupName, $optionValueName) {
     $value = civicrm_api3('OptionValue', 'get', [
@@ -104,7 +95,6 @@ class CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater {
    * @param string $actionToSyncOptionValueName
    *
    * @return array
-   * @throws \CiviCRM_API3_Exception
    */
   public function updateSyncInfo($contactId, $actionToSyncOptionValueName) {
     $actionToSyncOptionValueId = $this->getOptionValueID('odoo_partner_action_to_sync', $actionToSyncOptionValueName);
