@@ -228,7 +228,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    */
   private function enableExtensionOptionGroups() {
     foreach ($this->optionGroups as $optionGroupName) {
-      $this->toggleOptionGroupActivity($optionGroupName, TRUE);
+      $this->toggleOptionGroup($optionGroupName, TRUE);
     }
   }
 
@@ -239,7 +239,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    */
   private function enableExtensionCustomGroups() {
     foreach ($this->customGroups as $customGroupName) {
-      $this->toggleCustomGroupActivity($customGroupName, TRUE);
+      $this->toggleCustomGroup($customGroupName, TRUE);
     }
   }
 
@@ -250,7 +250,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    */
   private function disableExtensionCustomGroups() {
     foreach ($this->customGroups as $customGroupName) {
-      $this->toggleCustomGroupActivity($customGroupName, FALSE);
+      $this->toggleCustomGroup($customGroupName, FALSE);
     }
   }
 
@@ -261,7 +261,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    */
   private function disableExtensionOptionGroups() {
     foreach ($this->optionGroups as $optionGroupName) {
-      $this->toggleOptionGroupActivity($optionGroupName, FALSE);
+      $this->toggleOptionGroup($optionGroupName, FALSE);
     }
   }
 
@@ -273,7 +273,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    *
    * @throws \CiviCRM_API3_Exception
    */
-  private function toggleOptionGroupActivity($name, $isActive) {
+  private function toggleOptionGroup($name, $isActive) {
     civicrm_api3('OptionGroup', 'get', [
       'name' => $name,
       'api.OptionGroup.create' => [
@@ -291,7 +291,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    *
    * @throws \CiviCRM_API3_Exception
    */
-  private function toggleCustomGroupActivity($name, $isActive) {
+  private function toggleCustomGroup($name, $isActive) {
     $customGroup = civicrm_api3('CustomGroup', 'getsingle', [
       'name' => $name,
       'return' => ['id']
