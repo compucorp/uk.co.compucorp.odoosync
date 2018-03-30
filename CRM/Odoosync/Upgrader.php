@@ -7,6 +7,29 @@
 class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
 
   /**
+   * Custom groups created by the extension
+   *
+   * @var array
+   */
+  private $customGroups = [
+    'odoo_invoice_sync_information',
+    'odoo_partner_sync_information',
+    'purchase_order'
+  ];
+
+  /**
+   * Option groups created by the extension
+   *
+   * @var array
+   */
+  private $optionGroups = [
+    'msg_tpl_workflow_odoo_sync',
+    'odoo_sync_status',
+    'odoo_partner_action_to_sync',
+    'odoo_invoice_action_to_sync'
+  ];
+
+  /**
    * @throws \CiviCRM_API3_Exception
    */
   public function install() {
@@ -23,8 +46,26 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
   }
 
   /**
-   * This hook call when extension uninstall
+   * Run when a module is enabled.
    *
+   * @throws \CiviCRM_API3_Exception
+   */
+  public function enable() {
+    $this->enableExtensionOptionGroups();
+    $this->enableExtensionCustomGroups();
+  }
+
+  /**
+   * Run when a module is disabled.
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  public function disable() {
+    $this->disableExtensionOptionGroups();
+    $this->disableExtensionCustomGroups();
+  }
+
+  /**
    * @throws \CiviCRM_API3_Exception
    */
   public function uninstall() {
@@ -39,9 +80,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    * @throws \CiviCRM_API3_Exception
    */
   private function deleteExtensionOptionGroups() {
-    $optionGroupsToDelete = ['msg_tpl_workflow_odoo_sync', 'odoo_sync_status', 'odoo_partner_action_to_sync', 'odoo_invoice_action_to_sync'];
-
-    foreach ($optionGroupsToDelete as $optionGroupName) {
+    foreach ($this->optionGroups as $optionGroupName) {
       $this->deleteOptionGroup($optionGroupName);
     }
   }
@@ -64,9 +103,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    * @throws \CiviCRM_API3_Exception
    */
   private function deleteExtensionCustomGroups() {
-    $customGroupsToDelete = ['odoo_invoice_sync_information', 'odoo_partner_sync_information', 'purchase_order'];
-
-    foreach ($customGroupsToDelete as $customGroupName) {
+    foreach ($this->customGroups as $customGroupName) {
       $this->deleteCustomGroup($customGroupName);
     }
   }
@@ -182,6 +219,87 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
     ]);
 
     return (int) $id;
+  }
+
+  /**
+   * Enables all the option groups created by the extension
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function enableExtensionOptionGroups() {
+    foreach ($this->optionGroups as $optionGroupName) {
+      $this->toggleOptionGroup($optionGroupName, TRUE);
+    }
+  }
+
+  /**
+   * Enables all the custom groups created by the extension
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function enableExtensionCustomGroups() {
+    foreach ($this->customGroups as $customGroupName) {
+      $this->toggleCustomGroup($customGroupName, TRUE);
+    }
+  }
+
+  /**
+   * Disables all the custom groups created by the extension
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function disableExtensionCustomGroups() {
+    foreach ($this->customGroups as $customGroupName) {
+      $this->toggleCustomGroup($customGroupName, FALSE);
+    }
+  }
+
+  /**
+   * Disables all the option groups created by the extension
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function disableExtensionOptionGroups() {
+    foreach ($this->optionGroups as $optionGroupName) {
+      $this->toggleOptionGroup($optionGroupName, FALSE);
+    }
+  }
+
+  /**
+   * Sets is_active for OptionGroups
+   *
+   * @param string $name
+   * @param bool $isActive
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function toggleOptionGroup($name, $isActive) {
+    civicrm_api3('OptionGroup', 'get', [
+      'name' => $name,
+      'api.OptionGroup.create' => [
+        'id' => '$value.id',
+        'is_active' => (int) $isActive
+      ],
+    ]);
+  }
+
+  /**
+   * Sets is_active for CustomGroups
+   *
+   * @param string $name
+   * @param bool $isActive
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function toggleCustomGroup($name, $isActive) {
+    $customGroup = civicrm_api3('CustomGroup', 'getsingle', [
+      'name' => $name,
+      'return' => ['id']
+    ]);
+
+    if (isset($customGroup['id'])) {
+      CRM_Core_BAO_CustomGroup::setIsActive((int) $customGroup['id'], $isActive);
+    }
   }
 
 }

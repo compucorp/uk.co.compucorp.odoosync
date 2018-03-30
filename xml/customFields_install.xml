@@ -4,7 +4,7 @@
         <OptionGroup>
             <name>msg_tpl_workflow_odoo_sync</name>
             <title>Message Template Workflow for Odoo Sync</title>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
         </OptionGroup>
     </OptionGroups>
@@ -15,7 +15,7 @@
             <value>1</value>
             <is_default>1</is_default>
             <weight>1</weight>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
             <option_group_name>msg_tpl_workflow_odoo_sync</option_group_name>
             <description>CiviCRM Odoo Sync Error Report</description>
@@ -25,7 +25,7 @@
         <OptionGroup>
             <name>odoo_sync_status</name>
             <title>Sync status</title>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
         </OptionGroup>
     </OptionGroups>
@@ -36,7 +36,7 @@
             <value>1</value>
             <is_default>1</is_default>
             <weight>1</weight>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
             <option_group_name>odoo_sync_status</option_group_name>
             <description>Awaiting sync status</description>
@@ -47,7 +47,7 @@
             <value>2</value>
             <is_default>0</is_default>
             <weight>2</weight>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
             <option_group_name>odoo_sync_status</option_group_name>
             <description>Synced status</description>
@@ -58,7 +58,7 @@
             <name>sync_failed</name>
             <is_default>0</is_default>
             <weight>3</weight>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
             <option_group_name>odoo_sync_status</option_group_name>
             <description>Sync failed status</description>
@@ -68,7 +68,7 @@
         <OptionGroup>
             <name>odoo_partner_action_to_sync</name>
             <title>Action to Sync</title>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
         </OptionGroup>
     </OptionGroups>
@@ -79,7 +79,7 @@
             <value>1</value>
             <is_default>1</is_default>
             <weight>1</weight>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
             <option_group_name>odoo_partner_action_to_sync</option_group_name>
             <description>Create action to sync</description>
@@ -90,7 +90,7 @@
             <value>2</value>
             <is_default>0</is_default>
             <weight>2</weight>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
             <option_group_name>odoo_partner_action_to_sync</option_group_name>
             <description>Update action to sync</description>
@@ -100,7 +100,7 @@
         <OptionGroup>
             <name>odoo_invoice_action_to_sync</name>
             <title>Action to Sync</title>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
         </OptionGroup>
     </OptionGroups>
@@ -111,7 +111,7 @@
             <value>1</value>
             <is_default>1</is_default>
             <weight>1</weight>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
             <option_group_name>odoo_invoice_action_to_sync</option_group_name>
             <description>Create action to sync</description>
@@ -122,7 +122,7 @@
             <value>2</value>
             <is_default>0</is_default>
             <weight>2</weight>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
             <option_group_name>odoo_invoice_action_to_sync</option_group_name>
             <description>Cancelled action to sync</description>
@@ -133,7 +133,7 @@
             <value>3</value>
             <is_default>0</is_default>
             <weight>3</weight>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
             <option_group_name>odoo_invoice_action_to_sync</option_group_name>
             <description>Failed action to sync</description>
@@ -144,7 +144,7 @@
             <value>4</value>
             <is_default>0</is_default>
             <weight>4</weight>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
             <option_group_name>odoo_invoice_action_to_sync</option_group_name>
             <description>Partially paid action to sync</description>
@@ -155,7 +155,7 @@
             <value>5</value>
             <is_default>0</is_default>
             <weight>5</weight>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
             <option_group_name>odoo_invoice_action_to_sync</option_group_name>
             <description>Completed action to sync</description>
@@ -166,7 +166,7 @@
             <value>6</value>
             <is_default>0</is_default>
             <weight>6</weight>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
             <is_active>1</is_active>
             <option_group_name>odoo_invoice_action_to_sync</option_group_name>
             <description>Refunded action to sync</description>
@@ -183,7 +183,7 @@
             <is_active>1</is_active>
             <collapse_display>1</collapse_display>
             <collapse_adv_display>1</collapse_adv_display>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
         </CustomGroup>
     </CustomGroups>
     <CustomFields>
@@ -324,7 +324,7 @@
             <is_active>1</is_active>
             <collapse_display>1</collapse_display>
             <collapse_adv_display>1</collapse_adv_display>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
         </CustomGroup>
     </CustomGroups>
     <CustomFields>
@@ -452,7 +452,7 @@
             <is_active>1</is_active>
             <collapse_display>0</collapse_display>
             <collapse_adv_display>0</collapse_adv_display>
-            <is_reserved>1</is_reserved>
+            <is_reserved>0</is_reserved>
         </CustomGroup>
     </CustomGroups>
     <CustomFields>
