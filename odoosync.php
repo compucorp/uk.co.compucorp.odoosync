@@ -145,62 +145,6 @@ function odoosync_civicrm_navigationMenu(&$menu) {
  *
  */
 function odoosync_civicrm_postProcess($formName, &$form) {
-  postProcessContactInlineForms($formName, $form);
-  postProcessContactTaskDelete($formName, $form);
-  postProcessContactForm($formName, $form);
-}
-
-/**
- * Updates contact sync information through editing contact form inline-blocks
- *
- * @param $formName
- * @param $form
- */
-function postProcessContactInlineForms($formName, $form) {
-  $isInlineContactForm = preg_match('/^CRM_Contact_Form_Inline_/', $formName);
-  if ($isInlineContactForm && ($form->getAction() == CRM_Core_Action::UPDATE || CRM_Core_Action::ADD || CRM_Core_Action::DELETE)) {
-    $contactId = (int) $form->getVar('_contactId');
-    $syncInformationUpdater = new CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater();
-    $syncInformationUpdater->updateSyncInfo($contactId, 'update');
-  }
-}
-
-/**
- * Updates contact sync information within contact deleting process
- *
- * @param $formName
- * @param $form
- */
-function postProcessContactTaskDelete($formName, $form) {
-  if ($formName == "CRM_Contact_Form_Task_Delete" && $form->getAction() == CRM_Core_Action::NONE) {
-    $skipUnDelete = $form->getVar('_skipUndelete');
-    if (!$skipUnDelete) {
-      $contactIds = $form->getVar('_contactIds');
-      $syncInformationUpdater = new CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater();
-      foreach ($contactIds as $contactId) {
-        $syncInformationUpdater->updateSyncInfo($contactId, 'update');
-      }
-    }
-  }
-}
-
-/**
- * Updates contact sync information within contact creating or updating process
- *
- * @param $formName
- * @param $form
- */
-function postProcessContactForm($formName, $form) {
-  if ($formName == "CRM_Contact_Form_Contact") {
-    $contactId = (int) $form->getVar('_contactId');
-    $syncInformationUpdater = new CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater();
-
-    if ($form->getAction() == CRM_Core_Action::ADD) {
-      $syncInformationUpdater->updateSyncInfo($contactId, 'create');
-    }
-
-    if ($form->getAction() == CRM_Core_Action::UPDATE) {
-      $syncInformationUpdater->updateSyncInfo($contactId, 'update');
-    }
-  }
+  $syncInformationUpdater = new CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater($formName, $form);
+  $syncInformationUpdater->updateSyncInfo();
 }
