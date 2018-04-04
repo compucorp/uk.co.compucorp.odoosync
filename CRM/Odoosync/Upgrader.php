@@ -33,6 +33,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    * @throws \CiviCRM_API3_Exception
    */
   public function install() {
+    $this->installScheduledJob();
     $this->createSyncErrorMessageTemplate();
   }
 
@@ -69,6 +70,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    * @throws \CiviCRM_API3_Exception
    */
   public function uninstall() {
+    $this->deleteScheduledJob();
     $this->deleteSyncErrorMessageTemplate();
     $this->deleteExtensionOptionGroups();
     $this->deleteExtensionCustomGroups();
@@ -134,6 +136,21 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
       'name' => $customGroupName,
       'api.CustomGroup.delete' => ['id' => '$value.id'],
     ]);
+  }
+
+  /**
+   * Deletes scheduled job created by the extension
+   */
+  private function deleteScheduledJob() {
+    $params = ['name' => 'Sync CiviCRM changes to Odoo'];
+    $defaults = [];
+    $scheduledJob = CRM_Core_BAO_Job::retrieve($params, $defaults);
+
+    if (empty($scheduledJob)) {
+      return;
+    }
+
+    CRM_Core_BAO_Job::del($scheduledJob->id);
   }
 
   /**
@@ -219,6 +236,26 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
     ]);
 
     return (int) $id;
+  }
+
+  /**
+   * Installs scheduled job
+   */
+  private function installScheduledJob() {
+    $domainID = CRM_Core_Config::domainID();
+
+    $params = [
+      'name' => 'Sync CiviCRM changes to Odoo',
+      'description' => 'Sync CiviCRM changes to Odoo',
+      'api_entity' => 'OdooSync',
+      'api_action' => 'run',
+      'run_frequency' => 'Hourly',
+      'domain_id' => $domainID,
+      'is_active' => '1',
+      'parameters' => ''
+    ];
+
+    CRM_Core_BAO_Job::create($params);
   }
 
   /**
