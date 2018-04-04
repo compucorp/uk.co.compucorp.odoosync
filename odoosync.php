@@ -143,33 +143,8 @@ function odoosync_civicrm_navigationMenu(&$menu) {
 /**
  * Implements hook_civicrm_postProcess().
  *
- * @throws \CiviCRM_API3_Exception
  */
 function odoosync_civicrm_postProcess($formName, &$form) {
-  $formAction = $form->getAction();
-
-  if ($formName == "CRM_Contact_Form_Task_Delete" && $formAction == CRM_Core_Action::NONE) {
-    $skipUnDelete = $form->getVar('_skipUndelete');
-    if (!$skipUnDelete) {
-      $contactIds = $form->getVar('_contactIds');
-      $syncInformationUpdater = new CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater();
-      foreach ($contactIds as $contactId) {
-        $syncInformationUpdater->updateSyncInfo($contactId, 'update');
-      }
-    }
-  }
-
-  if ($formName == "CRM_Contact_Form_Contact") {
-    $contactId = (int) $form->getVar('_contactId');
-    $syncInformationUpdater = new CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater();
-
-    if ($formAction == CRM_Core_Action::ADD) {
-      $syncInformationUpdater->updateSyncInfo($contactId, 'create');
-    }
-
-    if ($formAction == CRM_Core_Action::UPDATE) {
-      $syncInformationUpdater->updateSyncInfo($contactId, 'update');
-    }
-  }
-
+  $syncInformationUpdater = new CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater($formName, $form);
+  $syncInformationUpdater->updateSyncInfo();
 }
