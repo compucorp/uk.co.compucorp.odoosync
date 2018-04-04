@@ -108,7 +108,7 @@ class CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater {
    */
   private function setSyncAction() {
     $isInlineContactForm = preg_match('/^CRM_Contact_Form_Inline_/', $this->formName);
-    if ($isInlineContactForm && ($this->formgetAction() == CRM_Core_Action::UPDATE ||
+    if ($isInlineContactForm && ($this->form->getAction() == CRM_Core_Action::UPDATE ||
         CRM_Core_Action::ADD || CRM_Core_Action::DELETE)) {
       $this->syncAction = 'update';
     }
