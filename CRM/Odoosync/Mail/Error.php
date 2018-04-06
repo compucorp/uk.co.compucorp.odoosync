@@ -24,14 +24,14 @@ class CRM_Odoosync_Mail_Error {
    *
    * @var array
    */
-  private $emails = [];
+  private $recipientsEmails = [];
 
   /**
    * Error message
    *
    * @var string
    */
-  private $errorMessage;
+  private $message;
 
   /**
    * Entity type
@@ -48,18 +48,18 @@ class CRM_Odoosync_Mail_Error {
   private $entityId;
 
   /**
-   * Domain email name
+   * Sender email name
    *
    * @var string
    */
-  private $domainEmailName;
+  private $senderEmailName;
 
   /**
-   * Domain email address
+   * Sender email address
    *
    * @var string
    */
-  private $domainEmailAddress;
+  private $senderEmailAddress;
 
   /**
    * CRM_Odoosync_Mail_Error constructor.
@@ -73,25 +73,28 @@ class CRM_Odoosync_Mail_Error {
    * @throws \CiviCRM_API3_Exception
    * @throws \Exception
    */
-  public function __construct($errorMessage, $entityType, $entityId) {
-    $this->setEntityId($entityId);
-    $this->setEntityType($entityType);
-    $this->setErrorMessage($errorMessage);
-    $this->setEmails();
-    $this->setLog(ts("Found %1 recipients' emails.", [ 1 => count($this->emails)]));
+  public function __construct($entityId, $entityType, $errorMessage) {
+    $this->entityId = $entityId;
+    $this->entityType = $entityType;
+    $this->setMessage($errorMessage);
 
-    list($domainEmailName, $domainEmailAddress) = CRM_Core_BAO_Domain::getNameAndEmail();
-    $this->setDomainEmailAddress($domainEmailAddress);
-    $this->setDomainEmailName($domainEmailName);
+    $this->setRecipientsEmails();
+    $this->setLog(ts("Found %1 recipients' emails.", [ 1 => count($this->recipientsEmails)]));
+
+    $senderEmail = CRM_Core_BAO_Domain::getNameAndEmail();
+    $this->setSenderEmailName($senderEmail[0]);
+    $this->setSenderEmailAddress($senderEmail[1]);
   }
 
   /**
    * Sends sync error message email to the recipient
    */
-  public function sendErrorMessage(){
-    foreach ($this->emails as $email) {
-      $this->sendToEmail($email);
+  public function sendToRecipients() {
+    foreach ($this->recipientsEmails as $email) {
+      $this->sendEmail($email);
     }
+
+    return $this->log;
   }
 
   /**
@@ -99,30 +102,30 @@ class CRM_Odoosync_Mail_Error {
    *
    * @param $email
    */
-  private function sendToEmail($email) {
-    $this->setLog(ts('Sending to the %1 ...', [ 1 => $email]));
+  private function sendEmail($email) {
+    $logMessages = ts('Sending to the %1 ... ', [ 1 => $email]);
 
-    $param = [
-      'groupName' => 'msg_tpl_workflow_odoo_sync',
-      'valueName' => 'civicrm_odoo_sync_error_report',
-      'tplParams' =>
-        [
-          'errorMessage' => $this->getErrorMessage(),
-          'entityType' => $this->getEntityType(),
-          'entityId' => $this->getEntityId()
+    try {
+      civicrm_api3('MessageTemplate', 'send', [
+        'option_group_name' => 'msg_tpl_workflow_odoo_sync',
+        'option_value_name' => 'civicrm_odoo_sync_error_report',
+        'template_params' => [
+          'errorMessage' => $this->message,
+          'entityType' => $this->entityType,
+          'entityId' => $this->entityId,
         ],
-      'from' => $this->getDomainEmailName() . " <" . $this->getDomainEmailAddress() . ">",
-      'toEmail' => $email,
-    ];
+        'from' => $this->senderEmailName . " <" . $this->senderEmailAddress . ">",
+        'to_email' => $email,
+      ]);
 
-    list($sent, $subject, $message, $html) = CRM_Core_BAO_MessageTemplate::sendTemplate($param);
+      $logMessages .= ts('Success. Email was sent.');
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      $logMessages .= ts('Email was not sent. Error:');
+      $logMessages .= ts($e->getMessage());
+    }
 
-    if ($sent === TRUE) {
-      $this->setLog(ts('Success. Email was sent.'));
-    }
-    else {
-      $this->setLog(ts('Error. Email was not sent.'));
-    }
+    $this->setLog($logMessages);
   }
 
   /**
@@ -130,122 +133,64 @@ class CRM_Odoosync_Mail_Error {
    *
    * @throws \CiviCRM_API3_Exception
    */
-  private function setEmails() {
-    $emailFromSetting = civicrm_api3(
-      'setting',
-      'getsingle',
+  private function setRecipientsEmails() {
+    $emailFromSetting = civicrm_api3('setting', 'getsingle',
       ['return' => ['odoosync_error_notice_address']]
     );
 
     if (!empty($emailFromSetting['odoosync_error_notice_address'])) {
-      $this->emails = explode(',', $emailFromSetting['odoosync_error_notice_address']);
+      $this->recipientsEmails = explode(',', $emailFromSetting['odoosync_error_notice_address']);
     }
   }
 
   /**
-   * Returns the log messages
+   * Sets log message
    *
-   * @return array
-   */
-  public function getReturnData() {
-    return [
-      'log' => $this->log
-    ];
-  }
-
-  /**
    * @param mixed $log
    */
-  public function setLog($log) {
+  private function setLog($log) {
     $this->log[] = $log;
   }
 
   /**
-   * @param string $errorMessage
-   */
-  public function setErrorMessage($errorMessage) {
-    if (empty($errorMessage)) {
-      $this->errorMessage = '';
-    }
-
-    $this->errorMessage = $errorMessage;
-  }
-
-  /**
-   * @return string
-   */
-  public function getEntityType() {
-    return $this->entityType;
-  }
-
-  /**
-   * @param string $entityType
-   */
-  public function setEntityType($entityType) {
-    $this->entityType = $entityType;
-  }
-
-  /**
-   * @return string
-   */
-  public function getEntityId() {
-    return $this->entityId;
-  }
-
-  /**
-   * @param string $entityId
-   */
-  public function setEntityId($entityId) {
-    $this->entityId = $entityId;
-  }
-
-  /**
-   * @return string
-   */
-  public function getErrorMessage() {
-    return $this->errorMessage;
-  }
-
-  /**
-   * @return string
-   */
-  public function getDomainEmailName() {
-    return $this->domainEmailName;
-  }
-
-  /**
-   * If exist sets domain email name or sets default value
+   * Sets the sender's configured name or defines the default one
    *
-   * @param string $domainEmailName
+   * @param string $senderEmailName
    */
-  public function setDomainEmailName($domainEmailName) {
-    if (empty($domainEmailName)) {
-      $this->domainEmailName = self::DEFAULT_DOMAIN_EMAIL_NAME;
+  private function setSenderEmailName($senderEmailName) {
+    if (empty($senderEmailName)) {
+      $this->senderEmailName = self::DEFAULT_DOMAIN_EMAIL_NAME;
     }
     else {
-      $this->domainEmailName = $domainEmailName;
+      $this->senderEmailName = $senderEmailName;
     }
   }
 
   /**
-   * @return string
-   */
-  public function getDomainEmailAddress() {
-    return $this->domainEmailAddress;
-  }
-
-  /**
-   * If exist sets domain email address
+   * Sets the sender's configured address or defines the default one
    *
-   * @param string $domainEmailAddress
+   * @param string $senderEmailAddress
    */
-  public function setDomainEmailAddress($domainEmailAddress) {
-    if (empty($domainEmailAddress)) {
-      $this->domainEmailAddress = "";
+  private function setSenderEmailAddress($senderEmailAddress) {
+    if (empty($senderEmailAddress)) {
+      $this->senderEmailAddress = "";
     }
     else {
-      $this->domainEmailAddress = $domainEmailAddress;
+      $this->senderEmailAddress = $senderEmailAddress;
     }
+  }
+
+  /**
+   * Sets error message
+   *
+   * @param string $message
+   */
+  private function setMessage($message) {
+    if (empty($message)) {
+      $this->message = '';
+    }
+
+    $this->message = $message;
   }
 
 }

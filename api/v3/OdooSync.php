@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This api calls when run schedule job "Sync CiviCRM changes to Odoo"
+ * This API get called when run schedule job "Sync CiviCRM changes to Odoo"
  *
  * @param $params
  *
@@ -9,20 +9,22 @@
  */
 function civicrm_api3_odoo_sync_run($params) {
   //TODO in next COS
+
   return TRUE;
 }
 
 /**
- * This api for odoo send error message
+ * This API is used for sending Odoo error message
  *
  * @param $params
  *
  * @return mixed
  */
 function civicrm_api3_odoo_sync_send_error_message($params) {
-  $errorMail = new CRM_Odoosync_Mail_Error($params['error_message'], $params['entity_type'], $params['entity_id']);
-  $errorMail->sendErrorMessage();
-  return $errorMail->getReturnData();
+  $errorMail = new CRM_Odoosync_Mail_Error($params['entity_id'], $params['entity_type'], $params['error_message']);
+  $log = $errorMail->sendToRecipients();
+
+  return $log;
 }
 
 /**
