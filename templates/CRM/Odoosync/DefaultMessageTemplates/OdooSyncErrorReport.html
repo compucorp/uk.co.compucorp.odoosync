@@ -2,6 +2,21 @@
     <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <body>
-        <h2>CiviCRM Odoo Sync Error Report</h2>
+        <h2>{ts}CiviCRM Odoo Sync Error Report{/ts}</h2>
+        <br/>
+        <table>
+            <tr>
+                <td><p>{ts}Entity type:{/ts}</p></td>
+                <td><p>{$entityType}</p></td>
+            </tr>
+            <tr>
+                <td><p>{ts}Entity id:{/ts}</p></td>
+                <td><p>{$entityId}</p></td>
+            </tr>
+            <tr>
+                <td><p>{ts}Error log:{/ts}</p></td>
+                <td><p>{$errorMessage}</p></td>
+            </tr>
+        </table>
     </body>
 </html>
