@@ -64,6 +64,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
    */
   public function postInstall() {
     $this->initializeContactsSyncInformation();
+    $this->initializeContributionSyncInformation();
   }
 
   /**
@@ -167,6 +168,28 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
     civicrm_api3('Job', 'get', [
       'name' => 'Sync CiviCRM changes to Odoo',
       'api.Job.delete' => ['id' => '$value.id'],
+    ]);
+  }
+
+  /**
+   *  Initializes contribution sync information
+   *  Set custom field "action_to_sync" and "sync_status" default values
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  private function initializeContributionSyncInformation() {
+    $defaultAction = $this->getDefaultOptionValue('odoo_invoice_action_to_sync');
+    $defaultStatus = $this->getDefaultOptionValue('odoo_sync_status');
+
+    $query = "
+      INSERT INTO odoo_invoice_sync_information(entity_id, action_to_sync, sync_status)
+      SELECT id, %1 , %2 FROM civicrm_contribution
+      WHERE id NOT IN (SELECT entity_id FROM odoo_invoice_sync_information);
+      ";
+
+    CRM_Core_DAO::executeQuery($query, [
+      1 => [$defaultAction, 'Integer'],
+      2 => [$defaultStatus, 'Integer'],
     ]);
   }
 
