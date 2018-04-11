@@ -5,12 +5,23 @@
  *
  * @param $params
  *
- * @return bool
+ * @return mixed
+ * @throws \Exception
  */
 function civicrm_api3_odoo_sync_run($params) {
-  //TODO in next COS
+  $sync = new CRM_Odoosync_Sync_HandlerContact($params);
+  return $sync->run();
+}
 
-  return TRUE;
+/**
+ * Adjusts Metadata for run action
+ *
+ * The metadata is used for setting defaults, documentation & validation
+ * @param array $params
+ * Array or parameters determined by getfields
+ */
+function _civicrm_api3_odoo_sync_run_spec(&$params) {
+  $params['debug']['api.default'] = 0;
 }
 
 /**
@@ -31,7 +42,8 @@ function civicrm_api3_odoo_sync_send_error_message($params) {
  * Adjust Metadata for "send_error_message" action
  *
  * The metadata is used for setting defaults, documentation & validation
- * @param array $params array or parameters determined by getfields
+ * @param array $params
+ * Array or parameters determined by getfields
  */
 function _civicrm_api3_odoo_sync_send_error_message_spec(&$params) {
   $params['error_message']['api.required'] = 1;
