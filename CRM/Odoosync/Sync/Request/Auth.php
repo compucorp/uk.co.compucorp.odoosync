@@ -72,7 +72,7 @@ class CRM_Odoosync_Sync_Request_Auth {
     $responseXml = (new CRM_Odoosync_Sync_Request_Curl)->sendXml($url, $xml);
     $response = CRM_Odoosync_Sync_Request_XmlGenerator::xmlToObject($responseXml);
 
-    if (!$response || (!isset($response->params->param->value->int) || ((string) $response->params->param->value->int == 1))) {
+    if (!$response || (!isset($response->params->param->value->int))) {
       return;
     }
 
