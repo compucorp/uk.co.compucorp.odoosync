@@ -21,7 +21,7 @@ class CRM_Odoosync_Sync_Contact_Data_Phone extends CRM_Odoosync_Sync_Contact_Dat
   /**
    * Prepares contact's phone for synchronization
    *
-   * @param $phoneType
+   * @param string $phoneType
    *
    * @return array|string
    */
@@ -58,7 +58,7 @@ class CRM_Odoosync_Sync_Contact_Data_Phone extends CRM_Odoosync_Sync_Contact_Dat
   /**
    * Gets contact's phone by special parameters
    *
-   * @param $param
+   * @param array $param
    *
    * @return array|string
    */

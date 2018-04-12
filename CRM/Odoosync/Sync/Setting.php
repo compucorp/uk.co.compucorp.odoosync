@@ -44,6 +44,8 @@ class CRM_Odoosync_Sync_Setting {
 
   /**
    * Gets singleton instance
+   *
+   * @return \CRM_Odoosync_Sync_Setting|object
    */
   public static function getInstance() {
     if (!self::$instance) {

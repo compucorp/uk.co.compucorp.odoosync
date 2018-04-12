@@ -71,8 +71,8 @@ class CRM_Odoosync_Sync_Contact_SyncInformation {
   /**
    * Gets option value by OptionGroup and OptionValue names
    *
-   * @param $optionGroupName
-   * @param $name
+   * @param string $optionGroupName
+   * @param string $name
    *
    * @return string
    * @throws \CiviCRM_API3_Exception

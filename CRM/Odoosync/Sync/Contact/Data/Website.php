@@ -36,6 +36,8 @@ class CRM_Odoosync_Sync_Contact_Data_Website extends CRM_Odoosync_Sync_Contact_D
   /**
    * Gets contact's website by special parameters
    *
+   * @param array $param
+   *
    * @return array|string
    */
   private function getWebsiteByParam($param) {

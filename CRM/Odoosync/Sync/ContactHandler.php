@@ -3,11 +3,11 @@
 /**
  * Odoo sync controller, calls to Odoo API, and provides log process
  */
-class CRM_Odoosync_Sync_HandlerContact extends CRM_Odoosync_Sync_Handler{
+class CRM_Odoosync_Sync_ContactHandler extends CRM_Odoosync_Sync_Handler {
 
   /**
    * Sync contact id
-   * 
+   *
    * @var int
    */
   protected $syncContactId;
@@ -45,7 +45,30 @@ class CRM_Odoosync_Sync_HandlerContact extends CRM_Odoosync_Sync_Handler{
     $this->setLog(ts("Contact data:"));
     $this->setLog($sendData);
 
-    //TODO: in COS-17
+    $this->callOdooApi($sendData);
+  }
+
+  /**
+   * Sends contact's prepared data to Odoo API
+   *
+   * @param array $sendData
+   */
+  private function callOdooApi($sendData) {
+    $this->setLog(ts('Call Odoo Api ...'));
+
+    $login = CRM_Odoosync_Sync_Request_Auth::getInstance();
+    if ($login->odooUserId === FALSE) {
+      $this->setLog(ts('Failed Odoo login.'));
+      return;
+    }
+
+    $syncContact = new CRM_Odoosync_Sync_Request_Contact($login->odooUserId);
+    $syncResponse = $syncContact->sync($sendData);
+    $this->setLog(ts('Odoo response:'));
+    $this->setLog($syncResponse);
+    $this->setLog(ts('End sync contact.'));
+
+    //TODO: Handling $syncResponse in COS-17
   }
 
 }

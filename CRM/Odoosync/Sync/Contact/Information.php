@@ -120,7 +120,7 @@ class CRM_Odoosync_Sync_Contact_Information {
    * Fixes contact prefix name
    * In Odoo prefixes "Ms." not exist, but has equal "Miss"
    *
-   * @param $prefixName
+   * @param string $prefixName
    *
    * @return string
    */
@@ -151,7 +151,7 @@ class CRM_Odoosync_Sync_Contact_Information {
   /**
    * Prepares contact's display name
    *
-   * @param $contact
+   * @param array $contact
    *
    * @return string
    */

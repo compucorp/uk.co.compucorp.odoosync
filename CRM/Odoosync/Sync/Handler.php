@@ -36,7 +36,7 @@ abstract class CRM_Odoosync_Sync_Handler {
   /**
    * CRM_Odoosync_Sync_Handler constructor.
    *
-   * @param $params
+   * @param array $params
    */
   public function __construct($params) {
     if (!empty($params['debug']) && $params['debug'] == 1) {

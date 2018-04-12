@@ -37,7 +37,7 @@ class CRM_Odoosync_Sync_Contact_Data_Email extends CRM_Odoosync_Sync_Contact_Dat
   /**
    * Gets contact's email by special parameters
    *
-   * @param $param
+   * @param array $param
    *
    * @return mixed
    */
