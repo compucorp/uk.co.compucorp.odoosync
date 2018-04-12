@@ -33,10 +33,10 @@ class CRM_Odoosync_Sync_Contact_Data_Address extends CRM_Odoosync_Sync_Contact_D
     }
 
     if (!empty($addressValues)) {
-      $this->addressData['streetAddress'] = $addressValues['street_address'];
+      $this->addressData['streetAddress'] = (!empty($addressValues['street_address'])) ? $addressValues['street_address'] : '';
       $this->addressData['supplementalAddress'] = $this->getSupplementalAddress($addressValues);
-      $this->addressData['city'] = $addressValues['city'];
-      $this->addressData['postalCode'] = $addressValues['postal_code'];
+      $this->addressData['city'] = (!empty($addressValues['city'])) ? $addressValues['city'] : '';
+      $this->addressData['postalCode'] = (!empty($addressValues['postal_code'])) ? $addressValues['postal_code'] : '';
       $this->addressData['countryIsoCode'] = $this->getCountryIsoCode($addressValues['country_id']);
     }
 
@@ -51,7 +51,6 @@ class CRM_Odoosync_Sync_Contact_Data_Address extends CRM_Odoosync_Sync_Contact_D
    * @return array
    */
   private function getAddressDataByLocationType($locationType) {
-
     try {
       $address = civicrm_api3('Address', 'get', [
         'sequential' => 1,
@@ -63,7 +62,7 @@ class CRM_Odoosync_Sync_Contact_Data_Address extends CRM_Odoosync_Sync_Contact_D
       return [];
     }
 
-    return $address['values'][0];
+    return (!empty($address['values'])) ? $address['values'][0] : [];
   }
 
   /**
@@ -84,7 +83,7 @@ class CRM_Odoosync_Sync_Contact_Data_Address extends CRM_Odoosync_Sync_Contact_D
       return [];
     }
 
-    return $address['values'][0];
+    return (!empty($address['values'])) ? $address['values'][0] : [];
   }
 
   /**

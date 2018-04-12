@@ -16,7 +16,8 @@ class CRM_Odoosync_Sync_ContactHandler extends CRM_Odoosync_Sync_Handler {
    * Starts contact Odoo sync
    */
   protected function syncStart() {
-    $this->setLog(ts('Start syncing ...'));
+    $this->setLog(ts('Start contact syncing ...'));
+    $this->setJobLog(ts('Start contact syncing ...'));
 
     $batchSize = (int) $this->setting['odoosync_batch_size'];
     $syncInformation = new CRM_Odoosync_Sync_Contact_SyncInformation();
@@ -25,6 +26,7 @@ class CRM_Odoosync_Sync_ContactHandler extends CRM_Odoosync_Sync_Handler {
       $this->syncContactId = $syncInformation->getFirstNotSyncContactId();
 
       if (empty($this->syncContactId)) {
+        $this->setJobLog(ts('All contact is sync'));
         $this->setLog(ts('All contact is sync'));
         return $this->getReturnData();
       }
@@ -42,6 +44,7 @@ class CRM_Odoosync_Sync_ContactHandler extends CRM_Odoosync_Sync_Handler {
     $this->setLog(ts("Prepare contact(id = %1) to sync", [1 => $this->syncContactId]));
 
     $sendData = (new CRM_Odoosync_Sync_Contact_Information($this->syncContactId))->retrieveData();
+
     $this->setLog(ts("Contact data:"));
     $this->setLog($sendData);
 
@@ -58,6 +61,7 @@ class CRM_Odoosync_Sync_ContactHandler extends CRM_Odoosync_Sync_Handler {
 
     $login = CRM_Odoosync_Sync_Request_Auth::getInstance();
     if ($login->odooUserId === FALSE) {
+      $this->setJobLog(ts('Error. Failed Odoo login.'));
       $this->setLog(ts('Failed Odoo login.'));
       return;
     }
@@ -66,9 +70,23 @@ class CRM_Odoosync_Sync_ContactHandler extends CRM_Odoosync_Sync_Handler {
     $syncResponse = $syncContact->sync($sendData);
     $this->setLog(ts('Odoo response:'));
     $this->setLog($syncResponse);
-    $this->setLog(ts('End sync contact.'));
 
     //TODO: Handling $syncResponse in COS-17
+    if ($syncResponse['is_error'] != 1) {
+      $this->setJobLog(
+        ts('Sync with success. Contact id = %1. Partner id = %2.',
+          [
+            1 => $this->syncContactId,
+            2 => $syncResponse['partner_id'],
+          ]
+        )
+      );
+    }
+    else {
+      $this->setJobLog(ts('Sync with error. Contact id = %1.', [1 => $this->syncContactId]));
+    }
+
+    $this->setLog(ts('End sync contact.'));
   }
 
 }

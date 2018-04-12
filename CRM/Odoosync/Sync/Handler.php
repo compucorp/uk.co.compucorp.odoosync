@@ -27,6 +27,13 @@ abstract class CRM_Odoosync_Sync_Handler {
   protected $log = [];
 
   /**
+   * Schedule job log
+   *
+   * @var array
+   */
+  protected $jobLog = '';
+
+  /**
    * Handler is error
    *
    * @var bool
@@ -72,22 +79,15 @@ abstract class CRM_Odoosync_Sync_Handler {
    * @return array
    */
   protected function getReturnData() {
+    $data = [];
+    $data['values'] = $this->jobLog;
+    $data['is_error'] = 0;
+
     if ($this->isDebug) {
-      return [
-        'log' => $this->log
-      ];
+      $data['debugLog'] = $this->log;
     }
 
-    return [];
-  }
-
-  /**
-   * Sets to log
-   *
-   * @param mixed $log
-   */
-  protected function setLog($log) {
-    $this->log[] = $log;
+    return $data;
   }
 
   /**
@@ -103,6 +103,24 @@ abstract class CRM_Odoosync_Sync_Handler {
       $this->isError = TRUE;
       $this->setLog($e->getMessage());
     }
+  }
+
+  /**
+   * Sets to Schedule log
+   *
+   * @param string $jobLog
+   */
+  public function setJobLog($jobLog) {
+    $this->jobLog .= $jobLog . '<br/>';
+  }
+
+  /**
+   * Sets to log
+   *
+   * @param mixed $log
+   */
+  protected function setLog($log) {
+    $this->log[] = $log;
   }
 
 }
