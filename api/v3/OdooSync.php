@@ -9,7 +9,7 @@
  * @throws \Exception
  */
 function civicrm_api3_odoo_sync_run($params) {
-  $sync = new CRM_Odoosync_Sync_ContactHandler($params);
+  $sync = new CRM_Odoosync_Sync_Contact($params);
   return $sync->run();
 }
 

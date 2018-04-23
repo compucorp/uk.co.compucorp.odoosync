@@ -1,32 +1,29 @@
 <?php
 
-/**
- * Retrieves prepared contact’s email for synchronization
- */
-class CRM_Odoosync_Sync_Contact_Data_Email extends CRM_Odoosync_Sync_Contact_Data_Data {
+class CRM_Odoosync_Sync_Contact_Data_Email extends CRM_Odoosync_Sync_Contact_Data {
 
   /**
-   * Prepares a contact’s email for synchronization
+   * Retrieves the Contact email address for sync
    *
    * @return string
    */
-  public function retrieveData() {
-    $email = $this->getEmailByParam(['location_type_id' => "Billing"]);
+  public function retrieve() {
+    $email = $this->getEmail(['location_type_id' => "Billing"]);
     if (!empty($email)) {
       return $email;
     }
 
-    $email = $this->getEmailByParam(['is_primary' => 1]);
+    $email = $this->getEmail(['is_primary' => 1]);
     if (!empty($email)) {
       return $email;
     }
 
-    $email = $this->getEmailByParam(['location_type_id' => "Main"]);
+    $email = $this->getEmail(['location_type_id' => "Main"]);
     if (!empty($email)) {
       return $email;
     }
 
-    $email = $this->getEmailByParam([]);
+    $email = $this->getEmail([]);
     if (!empty($email)) {
       return $email;
     }
@@ -35,22 +32,22 @@ class CRM_Odoosync_Sync_Contact_Data_Email extends CRM_Odoosync_Sync_Contact_Dat
   }
 
   /**
-   * Gets contact's email by special parameters
+   * Gets the contact's email address according the specified parameters
    *
-   * @param array $param
+   * @param array $additionalParams
    *
-   * @return mixed
+   * @return string
    */
-  private function getEmailByParam($param) {
-    $ultimateParam = [
+  private function getEmail($additionalParams) {
+    $defaultParams = [
       'return' => "email",
       'contact_id' => $this->contactId,
       'options' => ['limit' => 1],
       ];
-    $ultimateParam += $param;
+    $params = array_merge($defaultParams, $additionalParams);
 
     try {
-      return civicrm_api3('Email', 'getvalue', $ultimateParam);
+      return civicrm_api3('Email', 'getvalue', $params);
     }
     catch (CiviCRM_API3_Exception $e) {
       return '';

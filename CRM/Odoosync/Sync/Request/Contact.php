@@ -10,21 +10,14 @@ class CRM_Odoosync_Sync_Request_Contact {
    *
    * @var array
    */
-  protected $setting;
-
-  /**
-   * Odoo user id
-   *
-   * @var int
-   */
-  protected $odooUserId = FALSE;
+  private $setting;
 
   /**
    * List of the Odoo response fields to be generated
    *
    * @var array
    */
-  protected $syncContactResponse = [
+  private $syncContactResponse = [
     'is_error' => 0,
     'error_message' => '',
     'partner_id' => '',
@@ -37,17 +30,16 @@ class CRM_Odoosync_Sync_Request_Contact {
    *
    * @var string
    */
-  const ODOO_SYNC_URL = '/xmlrpc/2/object';
+  const ODOO_API_ENDPOINT = '/xmlrpc/2/object';
 
-  /**
-   * CRM_Odoosync_Sync_Request_Contact constructor.
-   *
-   * @param $odooUserId
-   */
-  public function __construct($odooUserId) {
-    $this->odooUserId = $odooUserId;
-    $syncSetting = CRM_Odoosync_Sync_Setting::getInstance();
-    $this->setting = $syncSetting->retrieveSetting();
+  public function __construct() {
+    if (CRM_Odoosync_Sync_Request_Auth::getInstance()->odooUserId === FALSE) {
+      $this->syncContactResponse['is_error'] = 1;
+      $this->syncContactResponse['error_message'] .= ts("Can't login to Odoo.");
+      return;
+    }
+    $syncSetting = CRM_Odoosync_Setting::getInstance();
+    $this->setting = $syncSetting->retrieve();
   }
 
   /**
@@ -59,12 +51,16 @@ class CRM_Odoosync_Sync_Request_Contact {
    * @return mixed
    */
   public function sync($sendData) {
-    $url = $this->setting['odoosync_odoo_instance_url'] . self::ODOO_SYNC_URL;
+    if (CRM_Odoosync_Sync_Request_Auth::getInstance()->odooUserId === FALSE) {
+      return $this->syncContactResponse;
+    }
+
+    $url = $this->setting['odoosync_odoo_instance_url'] . self::ODOO_API_ENDPOINT;
     $xml = CRM_Odoosync_Sync_Request_XmlGenerator::generateSyncOdooXml(
       $this->setting['odoosync_database_name'],
       $this->setting['odoosync_password'],
       'execute_kw',
-      $this->odooUserId,
+      CRM_Odoosync_Sync_Request_Auth::getInstance()->odooUserId,
       $sendData
     );
 
@@ -86,7 +82,7 @@ class CRM_Odoosync_Sync_Request_Contact {
    *
    * @return array
    */
-  protected function parseResponse($response) {
+  private function parseResponse($response) {
     $parsedData = [];
     foreach ($response->params->param->value->struct->member as $param) {
       if ((string) $param->name == 'error_log') {
@@ -123,7 +119,7 @@ class CRM_Odoosync_Sync_Request_Contact {
    *
    * @return string
    */
-  protected function parseErrorLogMessage($value) {
+  private function parseErrorLogMessage($value) {
     $messages = [];
     foreach ($value->array->data->value as $message) {
       $messages[] = (string) $message->string;

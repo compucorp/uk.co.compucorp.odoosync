@@ -1,20 +1,17 @@
 <?php
 
-/**
- * Prepares contact's phone, mobile and fax number for synchronization
- */
-class CRM_Odoosync_Sync_Contact_Data_Phone extends CRM_Odoosync_Sync_Contact_Data_Data {
+class CRM_Odoosync_Sync_Contact_Data_Phone extends CRM_Odoosync_Sync_Contact_Data {
 
   /**
    * Retrieves phone, mobile and fax number
    *
    * @return array
    */
-  public function retrieveData() {
+  public function retrieve() {
     return [
-      'numberPhone' => $this->getPhoneNumber('Phone'),
-      'numberMobile' => $this->getPhoneNumber('Mobile'),
-      'numberFax' => $this->getPhoneNumber('Fax'),
+      'phoneNumber' => $this->getPhoneNumberByType('Phone'),
+      'mobileNumber' => $this->getPhoneNumberByType('Mobile'),
+      'faxNumber' => $this->getPhoneNumberByType('Fax'),
     ];
   }
 
@@ -23,10 +20,10 @@ class CRM_Odoosync_Sync_Contact_Data_Phone extends CRM_Odoosync_Sync_Contact_Dat
    *
    * @param string $phoneType
    *
-   * @return array|string
+   * @return string
    */
-  private function getPhoneNumber($phoneType) {
-    $number = $this->getPhoneByParam([
+  private function getPhoneNumberByType($phoneType) {
+    $number = $this->getPhoneNumber([
       'location_type_id' => "Billing",
       'phone_type_id' => $phoneType
     ]);
@@ -35,7 +32,7 @@ class CRM_Odoosync_Sync_Contact_Data_Phone extends CRM_Odoosync_Sync_Contact_Dat
       return $number;
     }
 
-    $number = $this->getPhoneByParam([
+    $number = $this->getPhoneNumber([
       'is_primary' => 1,
       'phone_type_id' => $phoneType
     ]);
@@ -44,7 +41,7 @@ class CRM_Odoosync_Sync_Contact_Data_Phone extends CRM_Odoosync_Sync_Contact_Dat
       return $number;
     }
 
-    $number = $this->getPhoneByParam([
+    $number = $this->getPhoneNumber([
       'phone_type_id' => $phoneType
     ]);
 
@@ -58,18 +55,20 @@ class CRM_Odoosync_Sync_Contact_Data_Phone extends CRM_Odoosync_Sync_Contact_Dat
   /**
    * Gets contact's phone by special parameters
    *
-   * @param array $param
+   * @param array $additionalParams
    *
-   * @return array|string
+   * @return string
    */
-  private function getPhoneByParam($param) {
-    $ultimateParam = [
+  private function getPhoneNumber($additionalParams) {
+    $defaultParams = [
       'return' => "phone",
       'contact_id' => $this->contactId,
       'options' => ['limit' => 1],
-      ] + $param;
+      ];
+    $params = array_merge($defaultParams, $additionalParams);
+
     try {
-      return civicrm_api3('Phone', 'getvalue', $ultimateParam);
+      return civicrm_api3('Phone', 'getvalue', $params);
     }
     catch (CiviCRM_API3_Exception $e) {
       return '';

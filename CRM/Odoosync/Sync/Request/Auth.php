@@ -10,14 +10,14 @@ class CRM_Odoosync_Sync_Request_Auth {
    *
    * @var object
    */
-  protected static $instance;
+  private static $instance;
 
   /**
    * Setting for Odoo sync
    *
    * @var array
    */
-  protected $setting;
+  private $setting;
 
   /**
    * Odoo userId
@@ -31,16 +31,16 @@ class CRM_Odoosync_Sync_Request_Auth {
    *
    * @var string
    */
-  const ODOO_LOGIN_URL = '/xmlrpc/2/common';
+  const ODOO_API_ENDPOINT = '/xmlrpc/2/common';
 
   /**
    * CRM_Odoosync_Sync_Request_Auth constructor.
    *
    * @throws \Exception
    */
-  protected function __construct() {
-    $syncSetting = CRM_Odoosync_Sync_Setting::getInstance();
-    $this->setting = $syncSetting->retrieveSetting();
+  private function __construct() {
+    $syncSetting = CRM_Odoosync_Setting::getInstance();
+    $this->setting = $syncSetting->retrieve();
     $this->auth();
   }
 
@@ -51,7 +51,7 @@ class CRM_Odoosync_Sync_Request_Auth {
    */
   public static function getInstance() {
     if (!self::$instance) {
-      self::$instance = new CRM_Odoosync_Sync_Request_Auth();
+      self::$instance = new self();
     }
     return self::$instance;
   }
@@ -60,8 +60,8 @@ class CRM_Odoosync_Sync_Request_Auth {
    * Logs in on Odoo API
    * Gets Odoo user id
    */
-  protected function auth() {
-    $url = $this->setting['odoosync_odoo_instance_url'] . self::ODOO_LOGIN_URL;
+  private function auth() {
+    $url = $this->setting['odoosync_odoo_instance_url'] . self::ODOO_API_ENDPOINT;
     $xml = CRM_Odoosync_Sync_Request_XmlGenerator::generateLoginXml(
       $this->setting['odoosync_database_name'],
       $this->setting['odoosync_username'],
@@ -78,5 +78,9 @@ class CRM_Odoosync_Sync_Request_Auth {
 
     $this->odooUserId = (string) $response->params->param->value->int;
   }
+
+  private function __clone() {}
+
+  private function __wakeup() {}
 
 }

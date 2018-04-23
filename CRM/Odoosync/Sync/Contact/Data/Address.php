@@ -1,46 +1,34 @@
 <?php
 
-/**
- * Retrieves address data: street address, supplemental address,
- * city, postal code, country ISO code
- */
-class CRM_Odoosync_Sync_Contact_Data_Address extends CRM_Odoosync_Sync_Contact_Data_Data {
+class CRM_Odoosync_Sync_Contact_Data_Address extends CRM_Odoosync_Sync_Contact_Data {
 
   /**
-   * List of the address fields to be generated
-   *
-   * @var array
-   */
-  private $addressData = [
-    'streetAddress' => '',
-    'supplementalAddress' => '',
-    'city' => '',
-    'postalCode' => '',
-    'countryIsoCode' => '',
-  ];
-
-  /**
-   * Retrieves address data: street address, supplemental address,
-   * city, postal code, country ISO code
+   * Retrieves the Contact address details
    *
    * @return array
    */
-  public function retrieveData() {
+  public function retrieve() {
+    $fieldsToSync = [
+      'countryIsoCode' => '',
+      'supplementalAddress' => ''
+    ];
+
     $addressValues = $this->getAddressDataByLocationType('Billing');
 
     if (empty($addressValues)) {
       $addressValues = $this->getPrimaryAddressData();
     }
 
+    $fieldsToSync['streetAddress'] = (!empty($addressValues['street_address'])) ? $addressValues['street_address'] : '';
+    $fieldsToSync['city'] = (!empty($addressValues['city'])) ? $addressValues['city'] : '';
+    $fieldsToSync['postalCode'] = (!empty($addressValues['postal_code'])) ? $addressValues['postal_code'] : '';
+
     if (!empty($addressValues)) {
-      $this->addressData['streetAddress'] = (!empty($addressValues['street_address'])) ? $addressValues['street_address'] : '';
-      $this->addressData['supplementalAddress'] = $this->getSupplementalAddress($addressValues);
-      $this->addressData['city'] = (!empty($addressValues['city'])) ? $addressValues['city'] : '';
-      $this->addressData['postalCode'] = (!empty($addressValues['postal_code'])) ? $addressValues['postal_code'] : '';
-      $this->addressData['countryIsoCode'] = $this->getCountryIsoCode($addressValues['country_id']);
+      $fieldsToSync['countryIsoCode'] = $this->getCountryIsoCode($addressValues['country_id']);
+      $fieldsToSync['supplementalAddress'] = $this->generateSupplementalAddress($addressValues);
     }
 
-    return $this->addressData;
+    return $fieldsToSync;
   }
 
   /**
@@ -54,6 +42,7 @@ class CRM_Odoosync_Sync_Contact_Data_Address extends CRM_Odoosync_Sync_Contact_D
     try {
       $address = civicrm_api3('Address', 'get', [
         'sequential' => 1,
+        'options' => ['limit' => 1],
         'contact_id' => $this->contactId,
         'location_type_id' => $locationType,
       ]);
@@ -71,10 +60,10 @@ class CRM_Odoosync_Sync_Contact_Data_Address extends CRM_Odoosync_Sync_Contact_D
    * @return array
    */
   private function getPrimaryAddressData() {
-
     try {
       $address = civicrm_api3('Address', 'get', [
         'sequential' => 1,
+        'options' => ['limit' => 1],
         'contact_id' => $this->contactId,
         'is_primary' => 1,
       ]);
@@ -93,7 +82,7 @@ class CRM_Odoosync_Sync_Contact_Data_Address extends CRM_Odoosync_Sync_Contact_D
    *
    * @return string
    */
-  private function getSupplementalAddress($address) {
+  private function generateSupplementalAddress($address) {
     $supplementalAddress = '';
 
     if (!empty($address['supplemental_address_1'])) {
