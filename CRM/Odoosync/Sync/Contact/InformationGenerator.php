@@ -134,10 +134,10 @@ class CRM_Odoosync_Sync_Contact_InformationGenerator {
    * Generates Odoo related fields
    */
   private function generateOdooRelatedFields() {
-    $this->fieldsToGenerate['is_company'] = ($this->contactId['contact_type'] == 'Organization') ? 1 : 0;
-    $this->fieldsToGenerate['active'] = ($this->contactId['contact_is_deleted'] == '1') ? 0 : 1;
-    $this->fieldsToGenerate['x_civicrm_id'] = $this->contactId['contact_id'];
-    $this->fieldsToGenerate['title'] = $this->fixPrefixName($this->contactId['individual_prefix']);
+    $this->fieldsToGenerate['is_company'] = ($this->contactData['contact_type'] == 'Organization') ? 1 : 0;
+    $this->fieldsToGenerate['active'] = ($this->contactData['contact_is_deleted'] == '1') ? 0 : 1;
+    $this->fieldsToGenerate['x_civicrm_id'] = $this->contactData['contact_id'];
+    $this->fieldsToGenerate['title'] = $this->fixPrefixName($this->contactData['individual_prefix']);
     $this->fieldsToGenerate['customer'] = '1';
   }
 

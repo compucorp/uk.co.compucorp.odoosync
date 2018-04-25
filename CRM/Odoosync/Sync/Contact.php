@@ -63,22 +63,58 @@ class CRM_Odoosync_Sync_Contact extends CRM_Odoosync_Sync_BaseHandler {
     $this->setLog(ts('Odoo response:'));
     $this->setLog($syncResponse);
 
-    //TODO: Handling $syncResponse in COS-17
-    if ($syncResponse['is_error'] != 1) {
-      $this->setJobLog(
-        ts('Sync with success. Contact id = %1. Partner id = %2.',
-          [
-            1 => $this->syncContactId,
-            2 => $syncResponse['partner_id'],
-          ]
-        )
-      );
+    if ($syncResponse['is_error'] == 0) {
+      $this->handleSuccess($syncResponse['partner_id']);
     }
     else {
-      $this->setJobLog(ts('Sync with error. Contact id = %1.', [1 => $this->syncContactId]));
+      $this->handleError($syncResponse['error_message']);
     }
 
     $this->setLog(ts('End sync contact.'));
+  }
+
+  /**
+   * Handles success response
+   *
+   * @param $partnerId
+   */
+  private function handleSuccess($partnerId) {
+    $syncInformation = new CRM_Odoosync_Sync_Contact_SyncInformation();
+
+    $this->setJobLog(
+      ts('Sync with success. Contact id = %1. Partner id = %2.',
+        [
+          1 => $this->syncContactId,
+          2 => $partnerId,
+        ]
+      )
+    );
+    $syncInformation->updateContactSuccessfulSync($partnerId, $this->syncContactId);
+    $this->setLog(ts('Successful sync. Contact data updated.'));
+  }
+
+  /**
+   * Handles error response
+   *
+   * @param $errorMessage
+   */
+  private function handleError($errorMessage) {
+    $this->setJobLog(ts('Sync with error. Contact id = %1.', [1 => $this->syncContactId]));
+
+    $syncInformation = new CRM_Odoosync_Sync_Contact_SyncInformation();
+    $isReachedRetryThreshold = $syncInformation->updateContactErrorSync(
+      $errorMessage,
+      $this->setting['odoosync_retry_threshold'],
+      $this->syncContactId
+    );
+    $this->setLog(ts('Sync with error. Contact data updated.'));
+    $this->setLog($errorMessage);
+
+    if ($isReachedRetryThreshold) {
+      $this->setLog(ts("Reached retry threshold counter. 'Sync Status' marked as 'Sync failed. Sending errors to emails.'"));
+      $errorMail = new CRM_Odoosync_Mail_Error($this->syncContactId, 'Contact', $errorMessage);
+      $errorMail->sendToRecipients();
+    }
   }
 
 }

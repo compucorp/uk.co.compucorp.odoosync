@@ -1,91 +1,112 @@
 <?php
 
 /**
- * Gets appropriate contact for synchronization with Odoo
+ * Updates contact sync information when sync successful/error
  */
 class CRM_Odoosync_Sync_Contact_SyncInformation {
 
   /**
-   * Sync contact id
+   * Updates contact sync information when synchronization was successful
    *
-   * @var int
+   * @param int $partnerId
+   * @param int $contactId
    */
-  private $syncStatusFieldId;
+  public function updateContactSuccessfulSync($partnerId, $contactId) {
+    $query = "
+      UPDATE odoo_partner_sync_information AS sync_info
+        JOIN civicrm_option_group AS status_option_group 
+          ON status_option_group.name = 'odoo_sync_status'
+        LEFT JOIN civicrm_option_value AS status_option 
+          ON status_option.option_group_id = status_option_group.id
+          AND status_option.name = %2   
+      SET
+        sync_info.last_successful_sync_date = NOW(),
+        sync_info.sync_status = status_option.value,
+        sync_info.odoo_partner_id = %3,
+        sync_info.action_to_sync = NULL,
+        sync_info.action_date = NULL,
+        sync_info.last_retry = NULL,
+        sync_info.retry_count = 0,
+        sync_info.error_log = NULL
+      WHERE entity_id = %1 
+    ";
 
-  /**
-   * Sync contact id
-   *
-   * @var int
-   */
-  private $syncStatusValue;
-
-  /**
-   * CRM_Odoosync_Sync_Contact_SyncInformation constructor.
-   *
-   * @throws \CiviCRM_API3_Exception
-   */
-  public function __construct() {
-    $this->syncStatusFieldId = $this->getCustomFieldId('odoo_partner_sync_information', 'sync_status');
-    $this->syncStatusValue = $this->optionValueName('odoo_sync_status', 'awaiting_sync');
+    CRM_Core_DAO::executeQuery($query, [
+      1 => [$contactId, 'Integer'],
+      2 => ['synced' , 'String'],
+      3 => [(int) $partnerId , 'Integer']
+    ]);
   }
 
   /**
-   * Gets first not synchronized contact's id
+   * Updates contact sync information when synchronization was failed
    *
-   * @return int|null
+   * @param string $errorMessage
+   * @param int $retryThreshold
+   * @param int $contactId
+   *
+   * @return bool
    */
-  public function getFirstNotSyncContactId() {
-    try {
-      $contact = civicrm_api3('Contact', 'get', [
-        'return' => ["id"],
-        'options' => ['limit' => 1],
-        'custom_' . $this->syncStatusFieldId => $this->syncStatusValue,
-      ]);
+  public function updateContactErrorSync($errorMessage, $retryThreshold, $contactId) {
+    $retryCount = $this->getRetryCount($contactId);
+    $newRetryCount = $retryCount + 1;
+    $isReachedRetryThreshold = ($newRetryCount >= $retryThreshold);
 
-      return (int) $contact['id'];
+    $queryParam = [
+      1 => [$contactId, 'Integer'],
+      3 => [$errorMessage , 'String'],
+      2 => [(int) $newRetryCount , 'Integer'],
+    ];
+
+    if ($isReachedRetryThreshold) {
+      $query = "
+        UPDATE odoo_partner_sync_information AS sync_info
+          JOIN civicrm_option_group AS status_option_group 
+            ON status_option_group.name = 'odoo_sync_status'
+          LEFT JOIN civicrm_option_value AS status_option 
+            ON status_option.option_group_id = status_option_group.id
+            AND status_option.name = %4 
+        SET
+          sync_info.last_retry = NOW(),
+          sync_info.error_log = %3,
+          sync_info.retry_count = %2,
+          sync_info.sync_status = status_option.value
+        WHERE entity_id = %1
+      ";
+      $queryParam[4] = ['sync_failed' , 'String'];
     }
-    catch (CiviCRM_API3_Exception $e) {
-      return NULL;
+    else {
+      $query = "
+        UPDATE odoo_partner_sync_information AS sync_info
+        SET
+          sync_info.last_retry = NOW(),
+          sync_info.error_log = %3,
+          sync_info.retry_count = %2
+        WHERE sync_info.entity_id = %1
+      ";
     }
+
+    CRM_Core_DAO::executeQuery($query, $queryParam);
+
+    return $isReachedRetryThreshold;
   }
 
   /**
-   * Gets custom field id by group name and field name
+   * Gets contact's retry count
    *
-   * @param string $customGroupName
-   * @param string $name
+   * @param int $contactId
    *
    * @return int
-   * @throws \CiviCRM_API3_Exception
    */
-  public static function getCustomFieldId($customGroupName, $name) {
-    $result = civicrm_api3('CustomField', 'getvalue', [
-      'return' => "id",
-      'name' => $name,
-      'custom_group_id' => $customGroupName,
-    ]);
+  private function getRetryCount($contactId) {
+    $query = "SELECT retry_count FROM odoo_partner_sync_information WHERE entity_id = %1 LIMIT 1";
+    $dao = CRM_Core_DAO::executeQuery($query, [1 => [$contactId, 'Integer']]);
 
-    return (int) $result;
-  }
+    while ($dao->fetch()) {
+      return (int) $dao->retry_count;
+    }
 
-  /**
-   * Gets option value by OptionGroup and OptionValue names
-   *
-   * @param string $optionGroupName
-   * @param string $name
-   *
-   * @return string
-   * @throws \CiviCRM_API3_Exception
-   */
-  public function optionValueName($optionGroupName, $name) {
-    $value = civicrm_api3('OptionValue', 'get', [
-      'sequential' => 1,
-      'return' => ["value"],
-      'option_group_id' => $optionGroupName,
-      'name' => $name,
-    ]);
-
-    return $value['values'][0]['value'];
+    return 0;
   }
 
 }
