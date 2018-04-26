@@ -58,16 +58,18 @@ class CRM_Odoosync_Sync_Contact extends CRM_Odoosync_Sync_BaseHandler {
    * Handles Odoo API response and updates user sync information
    *
    * @param $syncResponse
+   *
+   * @throws \CiviCRM_API3_Exception
    */
   private function handleResponse($syncResponse) {
     $this->setLog(ts('Odoo response:'));
     $this->setLog($syncResponse);
 
     if ($syncResponse['is_error'] == 0) {
-      $this->handleSuccess($syncResponse['partner_id']);
+      $this->handleSuccessResponse($syncResponse['partner_id']);
     }
     else {
-      $this->handleError($syncResponse['error_message']);
+      $this->handleErrorResponse($syncResponse['error_message']);
     }
 
     $this->setLog(ts('End sync contact.'));
@@ -77,10 +79,10 @@ class CRM_Odoosync_Sync_Contact extends CRM_Odoosync_Sync_BaseHandler {
    * Handles success response
    *
    * @param $partnerId
+   *
+   * @throws \CiviCRM_API3_Exception
    */
-  private function handleSuccess($partnerId) {
-    $syncInformation = new CRM_Odoosync_Sync_Contact_SyncInformation();
-
+  private function handleSuccessResponse($partnerId) {
     $this->setJobLog(
       ts('Sync with success. Contact id = %1. Partner id = %2.',
         [
@@ -89,7 +91,8 @@ class CRM_Odoosync_Sync_Contact extends CRM_Odoosync_Sync_BaseHandler {
         ]
       )
     );
-    $syncInformation->updateContactSuccessfulSync($partnerId, $this->syncContactId);
+    $syncInformation = new CRM_Odoosync_Sync_Contact_ResponseHandler();
+    $syncInformation->handleSuccess($partnerId, $this->syncContactId);
     $this->setLog(ts('Successful sync. Contact data updated.'));
   }
 
@@ -97,12 +100,14 @@ class CRM_Odoosync_Sync_Contact extends CRM_Odoosync_Sync_BaseHandler {
    * Handles error response
    *
    * @param $errorMessage
+   *
+   * @throws \CiviCRM_API3_Exception
    */
-  private function handleError($errorMessage) {
+  private function handleErrorResponse($errorMessage) {
     $this->setJobLog(ts('Sync with error. Contact id = %1.', [1 => $this->syncContactId]));
 
-    $syncInformation = new CRM_Odoosync_Sync_Contact_SyncInformation();
-    $isReachedRetryThreshold = $syncInformation->updateContactErrorSync(
+    $syncInformation = new CRM_Odoosync_Sync_Contact_ResponseHandler();
+    $isReachedRetryThreshold = $syncInformation->handleError(
       $errorMessage,
       $this->setting['odoosync_retry_threshold'],
       $this->syncContactId
