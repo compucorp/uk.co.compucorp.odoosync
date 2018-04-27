@@ -36,7 +36,7 @@ class CRM_Odoosync_Sync_Contact_PendingContactsFetcher {
    */
   public function getPendingContact() {
     try {
-      $contact = civicrm_api3('Contact', 'get', [
+      $contact = civicrm_api3('Contact', 'getsingle', [
         'return' => ["id"],
         'options' => ['limit' => 1],
         'custom_' . $this->syncStatusFieldId => $this->syncStatusValue,
