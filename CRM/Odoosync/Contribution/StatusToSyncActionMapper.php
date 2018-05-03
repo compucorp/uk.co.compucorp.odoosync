@@ -3,7 +3,7 @@
 /**
  * Mapping contribution statuses to sync actions
  */
-class CRM_Odoosync_Contribution_StatusMapping {
+class CRM_Odoosync_Contribution_StatusToSyncActionMapper {
 
   /**
    * Gets 'action to sync' by contribution id
@@ -12,10 +12,11 @@ class CRM_Odoosync_Contribution_StatusMapping {
    *
    * @return string
    */
-  public function getActionByContributionId($contributionId) {
-    $contributionStatusId = $this->getContributionStatusId($contributionId);
-    $contributionStatusName = $this->getContributionStatus($contributionStatusId);
-    return $this->retrieveAction($contributionStatusName);
+  public static function getActionByContributionId($contributionId) {
+    $contributionStatusId = self::getContributionStatusId($contributionId);
+    $contributionStatusName = self::getContributionStatus($contributionStatusId);
+
+    return self::retrieveAction($contributionStatusName);
   }
 
   /**
@@ -25,9 +26,10 @@ class CRM_Odoosync_Contribution_StatusMapping {
    *
    * @return string
    */
-  public function getActionByContributionStatusId($contributionStatusId) {
-    $contributionStatusName = $this->getContributionStatus($contributionStatusId);
-    return $this->retrieveAction($contributionStatusName);
+  public static function getActionByContributionStatusId($contributionStatusId) {
+    $contributionStatusName = self::getContributionStatus($contributionStatusId);
+
+    return self::retrieveAction($contributionStatusName);
   }
 
   /**
@@ -53,12 +55,16 @@ class CRM_Odoosync_Contribution_StatusMapping {
    *
    * @return string
    */
-  private function getContributionStatus($statusId) {
-    return CRM_Core_PseudoConstant::getName(
-      'CRM_Contribute_BAO_Contribution',
-      'contribution_status_id',
-      $statusId
-    );
+  private static function getContributionStatus($statusId) {
+    $optionList = civicrm_api3('Contribution', 'getoptions', [
+      'field' => "contribution_status_id"
+    ]);
+
+    if (empty($optionList['values'])) {
+      return '';
+    }
+
+    return (isset($optionList['values'][$statusId])) ? $optionList['values'][$statusId] : '';
   }
 
   /**
@@ -68,7 +74,7 @@ class CRM_Odoosync_Contribution_StatusMapping {
    *
    * @return string
    */
-  private function retrieveAction($statusName) {
+  private static function retrieveAction($statusName) {
     switch ($statusName) {
       case "Completed":
         $actionName = "completed";
@@ -106,4 +112,3 @@ class CRM_Odoosync_Contribution_StatusMapping {
   }
 
 }
-
