@@ -83,23 +83,27 @@ class CRM_Odoosync_Sync_Contact_Data_Address extends CRM_Odoosync_Sync_Contact_D
    * @return string
    */
   private function generateSupplementalAddress($address) {
-    $supplementalAddress = '';
+    $addressList = [];
 
     if (!empty($address['supplemental_address_1'])) {
-      $supplementalAddress .= $address['supplemental_address_1'] . ';';
+      $addressList[] = trim(str_replace(',', ' ', $address['supplemental_address_1']));
     }
 
     if (!empty($address['supplemental_address_2'])) {
-      $supplementalAddress .= $address['supplemental_address_2'] . ';';
+      $addressList[] = trim(str_replace(',', ' ', $address['supplemental_address_2']));
     }
 
     if (!empty($address['supplemental_address_3'])) {
-      $supplementalAddress .= $address['supplemental_address_3'] . ';';
+      $addressList[] = trim(str_replace(',', ' ', $address['supplemental_address_3']));
     }
 
     if (!empty($address['state_province_id'])) {
-      $supplementalAddress .= CRM_Core_PseudoConstant::stateProvince($address['state_province_id']) . ';';
+      $addressList[] = trim(
+        str_replace(',', ' ', CRM_Core_PseudoConstant::stateProvince($address['state_province_id']))
+      );
     }
+
+    $supplementalAddress = implode(', ', $addressList);
 
     return $supplementalAddress;
   }

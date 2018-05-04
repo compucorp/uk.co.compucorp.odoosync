@@ -32,6 +32,7 @@ class CRM_Odoosync_Sync_Contact_Data_Website extends CRM_Odoosync_Sync_Contact_D
   private function getWebsiteURL($additionalParams = []) {
     $defaultParams = [
       'return' => 'url',
+      'options' => ['limit' => 1],
       'contact_id' => $this->contactId,
       ];
     $params = array_merge($defaultParams, $additionalParams);
