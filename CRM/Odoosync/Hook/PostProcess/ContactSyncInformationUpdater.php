@@ -88,7 +88,7 @@ class CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater {
     $this->syncStatusFieldId = $this->getSyncInfoCustomFieldId('sync_status');
     $this->actionToSyncFieldId = $this->getSyncInfoCustomFieldId('action_to_sync');
     $this->actionDateFieldId = $this->getSyncInfoCustomFieldId('action_date');
-    $this->awaitingSyncOptionValueId = $this->getOptionValueID('odoo_sync_status', 'awaiting_sync');
+    $this->awaitingSyncOptionValueId = CRM_Odoosync_Common_OptionValue::getOptionValueID('odoo_sync_status', 'awaiting_sync');
   }
 
   /**
@@ -140,7 +140,7 @@ class CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater {
       return;
     }
 
-    $actionToSyncOptionValueId = $this->getOptionValueID('odoo_partner_action_to_sync', $this->syncAction);
+    $actionToSyncOptionValueId = CRM_Odoosync_Common_OptionValue::getOptionValueID('odoo_partner_action_to_sync', $this->syncAction);
     $param = [
       'custom_' . $this->syncStatusFieldId => $this->awaitingSyncOptionValueId,
       'custom_' . $this->actionToSyncFieldId => $actionToSyncOptionValueId,
@@ -169,26 +169,6 @@ class CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater {
     ]);
 
     return (int) $customFieldId;
-  }
-
-  /**
-   * Gets the specified option value ID (value)
-   * for the specified option group.
-   *
-   * @param string $optionGroupName
-   * @param string $optionValueName
-   *
-   * @return int
-   */
-  private function getOptionValueID($optionGroupName, $optionValueName) {
-    $value = civicrm_api3('OptionValue', 'get', [
-      'sequential' => 1,
-      'return' => ["value"],
-      'option_group_id' => $optionGroupName,
-      'name' => $optionValueName,
-    ]);
-
-    return (int) $value['values'][0]['value'];
   }
 
 }

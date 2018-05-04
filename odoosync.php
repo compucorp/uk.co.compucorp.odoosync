@@ -142,9 +142,47 @@ function odoosync_civicrm_navigationMenu(&$menu) {
 
 /**
  * Implements hook_civicrm_postProcess().
- *
  */
 function odoosync_civicrm_postProcess($formName, &$form) {
   $syncInformationUpdater = new CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater($formName, $form);
   $syncInformationUpdater->updateSyncInfo();
+}
+
+/**
+ * Implements hook_civicrm_pre().
+ */
+function odoosync_civicrm_pre($op, $objectName, $id, &$params) {
+  $contributionSyncInformationUpdater = new CRM_Odoosync_Hook_Pre_Contribution($op, $objectName, $id, $params);
+  $contributionSyncInformationUpdater->process();
+}
+
+/**
+ * Implements hook_civicrm_post().
+ */
+function odoosync_civicrm_post($op, $objectName, $objectId, &$objectRef) {
+  //contribution
+  if ($objectName == 'Contribution') {
+    if ($op == 'create' || $op == 'edit') {
+      $contribution = new CRM_Odoosync_Hook_Post_Contribution($op, $objectName, $objectId, $objectRef);
+      $contribution->process();
+    }
+  }
+
+  //entityFinancialTrxn
+  if ($objectName == 'EntityFinancialTrxn' && $objectRef->entity_table == "civicrm_financial_item"
+    && ($op == 'create' || $op == 'edit' || $op == 'delete')
+  ) {
+    $entityFinancialTrxn = new CRM_Odoosync_Hook_Post_EntityFinancialTrxn($op, $objectName, $objectId, $objectRef);
+    $entityFinancialTrxn->process();
+  }
+
+  //lineItem
+  if ($objectName = 'LineItem' && isset($objectRef->entity_table)
+    && $objectRef->entity_table == 'civicrm_contribution'
+    && ($op == 'create' || $op == 'edit' || $op == 'delete')
+  ) {
+    $lineItem = new CRM_Odoosync_Hook_Post_LineItem($op, $objectName, $objectId, $objectRef);
+    $lineItem->process();
+  }
+
 }

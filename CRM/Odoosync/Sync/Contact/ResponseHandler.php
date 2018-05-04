@@ -14,7 +14,7 @@ class CRM_Odoosync_Sync_Contact_ResponseHandler {
    * @throws \CiviCRM_API3_Exception
    */
   public function handleSuccess($partnerId, $contactId) {
-    $syncStatusId = $this->getOptionValueID('odoo_sync_status', 'synced');
+    $syncStatusId = CRM_Odoosync_Common_OptionValue::getOptionValueID('odoo_sync_status', 'synced');
     $query = "
       UPDATE odoo_partner_sync_information AS sync_info 
       SET
@@ -58,7 +58,7 @@ class CRM_Odoosync_Sync_Contact_ResponseHandler {
     ];
 
     if ($isReachedRetryThreshold) {
-      $syncFailedStatusId = $this->getOptionValueID('odoo_sync_status', 'sync_failed');
+      $syncFailedStatusId = CRM_Odoosync_Common_OptionValue::getOptionValueID('odoo_sync_status', 'sync_failed');
       $query = "
         UPDATE odoo_partner_sync_information AS sync_info
         SET
@@ -102,27 +102,6 @@ class CRM_Odoosync_Sync_Contact_ResponseHandler {
     }
 
     return 0;
-  }
-
-  /**
-   * Gets the specified option value ID (value)
-   * for the specified option group.
-   *
-   * @param string $optionGroupName
-   * @param string $optionValueName
-   *
-   * @return string
-   * @throws \CiviCRM_API3_Exception
-   */
-  private function getOptionValueID($optionGroupName, $optionValueName) {
-    $value = civicrm_api3('OptionValue', 'get', [
-      'sequential' => 1,
-      'return' => ["value"],
-      'option_group_id' => $optionGroupName,
-      'name' => $optionValueName,
-    ]);
-
-    return $value['values'][0]['value'];
   }
 
 }
