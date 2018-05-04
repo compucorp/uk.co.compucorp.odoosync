@@ -20,19 +20,18 @@ class CRM_Odoosync_Sync_Contact extends CRM_Odoosync_Sync_BaseHandler {
   protected function startSync() {
     $this->setLog(ts('Start Contacts Syncing ...'));
     $this->setJobLog(ts('Start Contacts Syncing ...'));
+    
+    $pendingContacts = new CRM_Odoosync_Sync_Contact_PendingContacts();
+    $contactIdList = $pendingContacts->getPendingContacts();
 
-    $batchSize = (int) $this->setting['odoosync_batch_size'];
-    $pendingContactsFetcher = new CRM_Odoosync_Sync_Contact_PendingContactsFetcher();
+    if (empty($contactIdList)) {
+      $this->setJobLog(ts('All contact is sync'));
+      $this->setLog(ts('All contact is sync'));
+      return $this->getDebuggingData();
+    }
 
-    for ($i = 0; $i < $batchSize; $i++) {
-      $this->syncContactId = $pendingContactsFetcher->getPendingContact();
-
-      if (empty($this->syncContactId)) {
-        $this->setJobLog(ts('All contact is sync'));
-        $this->setLog(ts('All contact is sync'));
-        return $this->getDebuggingData();
-      }
-
+    foreach ($contactIdList as $contactId) {
+      $this->syncContactId = $contactId;
       $this->syncContact();
     }
 
