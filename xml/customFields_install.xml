@@ -206,6 +206,7 @@
             <data_type>Date</data_type>
             <html_type>Select Date</html_type>
             <date_format>mm/dd/yy</date_format>
+            <time_format>2</time_format>
             <is_searchable>1</is_searchable>
             <is_view>1</is_view>
             <is_required>0</is_required>
@@ -276,6 +277,7 @@
             <data_type>Date</data_type>
             <html_type>Select Date</html_type>
             <date_format>mm/dd/yy</date_format>
+            <time_format>2</time_format>
             <is_searchable>1</is_searchable>
             <is_view>1</is_view>
             <is_required>0</is_required>
@@ -290,6 +292,7 @@
             <data_type>Date</data_type>
             <html_type>Select Date</html_type>
             <date_format>mm/dd/yy</date_format>
+            <time_format>2</time_format>
             <is_searchable>1</is_searchable>
             <is_view>1</is_view>
             <is_required>0</is_required>
@@ -347,6 +350,7 @@
             <data_type>Date</data_type>
             <html_type>Select Date</html_type>
             <date_format>mm/dd/yy</date_format>
+            <time_format>2</time_format>
             <is_searchable>1</is_searchable>
             <is_view>1</is_view>
             <is_required>0</is_required>
@@ -404,6 +408,7 @@
             <data_type>Date</data_type>
             <html_type>Select Date</html_type>
             <date_format>mm/dd/yy</date_format>
+            <time_format>2</time_format>
             <is_searchable>1</is_searchable>
             <is_view>1</is_view>
             <is_required>0</is_required>
@@ -418,6 +423,7 @@
             <data_type>Date</data_type>
             <html_type>Select Date</html_type>
             <date_format>mm/dd/yy</date_format>
+            <time_format>2</time_format>
             <is_searchable>1</is_searchable>
             <is_view>1</is_view>
             <is_required>0</is_required>
