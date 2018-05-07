@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Gets appropriate contact for synchronization with Odoo
+ * Gets appropriate contacts for synchronization with Odoo
  */
-class CRM_Odoosync_Sync_Contact_PendingContactsFetcher {
+class CRM_Odoosync_Sync_Contact_PendingContacts {
 
   /**
    * Sync contact id
@@ -30,22 +30,30 @@ class CRM_Odoosync_Sync_Contact_PendingContactsFetcher {
   }
 
   /**
-   * Gets first not synchronized contact's id
+   * Gets non-synchronized contact Ids
    *
-   * @return int|null
+   * @return array
    */
-  public function getPendingContact() {
+  public function getPendingContacts() {
+    $syncSetting = CRM_Odoosync_Setting::getInstance()->retrieve();
+
     try {
-      $contact = civicrm_api3('Contact', 'getsingle', [
+      $contacts = civicrm_api3('Contact', 'get', [
         'return' => ["id"],
-        'options' => ['limit' => 1],
+        'is_deleted' => ['IS NOT NULL' => 1],
+        'options' => ['limit' => (int) $syncSetting['odoosync_batch_size']],
         'custom_' . $this->syncStatusFieldId => $this->syncStatusValue,
       ]);
 
-      return (int) $contact['id'];
+      $contactListId = [];
+      foreach ($contacts['values'] as $contact) {
+        $contactListId[] = $contact['contact_id'];
+      }
+
+      return $contactListId;
     }
     catch (CiviCRM_API3_Exception $e) {
-      return NULL;
+      return [];
     }
   }
 
