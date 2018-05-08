@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Provides syncing contact with Odoo
+ * Provides syncing contribution with Odoo
  */
-class CRM_Odoosync_Sync_Request_Contact {
+class CRM_Odoosync_Sync_Request_Contribution {
 
   /**
    * Setting for Odoo sync
@@ -17,12 +17,12 @@ class CRM_Odoosync_Sync_Request_Contact {
    *
    * @var array
    */
-  private $syncContactResponse = [
+  private $syncContributionResponse = [
     'is_error' => 0,
     'error_message' => '',
-    'partner_id' => '',
-    'timestamp' => '',
-    'contact_id' => ''
+    'invoice_number' => '0',
+    'creditnote_number' => '0',
+    'timestamp' => 0
   ];
 
   /**
@@ -34,8 +34,8 @@ class CRM_Odoosync_Sync_Request_Contact {
 
   public function __construct() {
     if (CRM_Odoosync_Sync_Request_Auth::getInstance()->odooUserId === FALSE) {
-      $this->syncContactResponse['is_error'] = 1;
-      $this->syncContactResponse['error_message'] .= ts("Can't login to Odoo.");
+      $this->syncContributionResponse['is_error'] = 1;
+      $this->syncContributionResponse['error_message'] .= ts("Can't login to Odoo.");
       return;
     }
     $syncSetting = CRM_Odoosync_Setting::getInstance();
@@ -52,11 +52,11 @@ class CRM_Odoosync_Sync_Request_Contact {
    */
   public function sync($sendData) {
     if (CRM_Odoosync_Sync_Request_Auth::getInstance()->odooUserId === FALSE) {
-      return $this->syncContactResponse;
+      return $this->syncContributionResponse;
     }
 
     $url = $this->setting['odoosync_odoo_instance_url'] . self::ODOO_API_ENDPOINT;
-    $xml = CRM_Odoosync_Sync_Request_XmlGenerator::generateContactSyncOdooXml(
+    $xml = CRM_Odoosync_Sync_Request_XmlGenerator::generateContributionSyncOdooXml(
       $this->setting['odoosync_database_name'],
       $this->setting['odoosync_password'],
       'execute_kw',
@@ -67,9 +67,9 @@ class CRM_Odoosync_Sync_Request_Contact {
     $responseXml = (new CRM_Odoosync_Sync_Request_Curl)->sendXml($url, $xml);
     $response = CRM_Odoosync_Sync_Request_XmlGenerator::xmlToObject($responseXml);
     if (!$response) {
-      $this->syncContactResponse['is_error'] = 1;
-      $this->syncContactResponse['error_message'] .= ts("Can't parse response xml.");
-      return $this->syncContactResponse;
+      $this->syncContributionResponse['is_error'] = 1;
+      $this->syncContributionResponse['error_message'] .= ts("Can't parse response xml.");
+      return $this->syncContributionResponse;
     }
 
     return $this->parseResponse($response);
@@ -94,26 +94,38 @@ class CRM_Odoosync_Sync_Request_Contact {
     }
 
     if (empty($response)) {
-      $this->syncContactResponse['is_error'] = 1;
-      $this->syncContactResponse['error_message'] .= ts("Can't parse sync response.");
+      $this->syncContributionResponse['is_error'] = 1;
+      $this->syncContributionResponse['error_message'] .= ts("Can't parse sync response.");
     }
 
     if ($parsedData['is_error'] == 1) {
-      $this->syncContactResponse['is_error'] = 1;
-      $this->syncContactResponse['error_message'] .= $parsedData['error_log'];
+      $this->syncContributionResponse['is_error'] = 1;
+      $this->syncContributionResponse['error_message'] .= $parsedData['error_log'];
     }
 
     if (!empty($response)) {
-      $this->syncContactResponse['partner_id'] = $parsedData['partner_id'];
-      $this->syncContactResponse['timestamp'] = $parsedData['timestamp'];
-      $this->syncContactResponse['contact_id'] = $parsedData['contact_id'];
+      if (isset($parsedData['contribution_id'])) {
+        $this->syncContributionResponse['invoice_number'] = $parsedData['contribution_id'];
+      }
+
+      if (isset($parsedData['invoice_number'])) {
+        $this->syncContributionResponse['invoice_number'] = $parsedData['invoice_number'];
+      }
+
+      if (isset($parsedData['timestamp'])) {
+        $this->syncContributionResponse['timestamp'] = (int) $parsedData['timestamp'];
+      }
+
+      if (isset($parsedData['creditnote_number'])) {
+        $this->syncContributionResponse['creditnote_number'] = $parsedData['creditnote_number'];
+      }
     }
     else {
-      $this->syncContactResponse['is_error'] = 1;
-      $this->syncContactResponse['error_message'] .= ts('Empty response.');
+      $this->syncContributionResponse['is_error'] = 1;
+      $this->syncContributionResponse['error_message'] .= ts('Empty response.');
     }
 
-    return $this->syncContactResponse;
+    return $this->syncContributionResponse;
   }
 
   /**

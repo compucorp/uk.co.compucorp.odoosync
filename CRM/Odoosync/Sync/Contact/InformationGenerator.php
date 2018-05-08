@@ -123,10 +123,10 @@ class CRM_Odoosync_Sync_Contact_InformationGenerator {
   private function generateDateFields() {
     $contactDate = CRM_Contact_BAO_Contact::getTimestamps($this->contactId);
     if (!empty($contactDate['modified_date'])) {
-      $this->fieldsToGenerate['write_date'] = $this->convertDateToTimestamp($contactDate['modified_date']);
+      $this->fieldsToGenerate['write_date'] = CRM_Odoosync_Common_Date::convertDateToTimestamp($contactDate['modified_date']);
     }
     if (!empty($contactDate['created_date'])) {
-      $this->fieldsToGenerate['create_date'] = $this->convertDateToTimestamp($contactDate['created_date']);
+      $this->fieldsToGenerate['create_date'] = CRM_Odoosync_Common_Date::convertDateToTimestamp($contactDate['created_date']);
     }
   }
 
@@ -159,18 +159,6 @@ class CRM_Odoosync_Sync_Contact_InformationGenerator {
     }
 
     return $prefixName;
-  }
-
-  /**
-   * Converts MySQL date format into timestamp
-   *
-   * @param $mysqlDate
-   *
-   * @return int
-   */
-  public function convertDateToTimestamp($mysqlDate) {
-    $date = DateTime::createFromFormat('Y-m-d H:i:s', $mysqlDate);
-    return $date->getTimestamp();
   }
 
   /**

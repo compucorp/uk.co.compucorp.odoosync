@@ -20,7 +20,7 @@ class CRM_Odoosync_Sync_Contact extends CRM_Odoosync_Sync_BaseHandler {
   protected function startSync() {
     $this->setLog(ts('Start Contacts Syncing ...'));
     $this->setJobLog(ts('Start Contacts Syncing ...'));
-
+    
     $pendingContacts = new CRM_Odoosync_Sync_Contact_PendingContacts();
     $contactIdList = $pendingContacts->getPendingContacts();
 
@@ -90,8 +90,8 @@ class CRM_Odoosync_Sync_Contact extends CRM_Odoosync_Sync_BaseHandler {
         ]
       )
     );
-    $syncInformation = new CRM_Odoosync_Sync_Contact_ResponseHandler();
-    $syncInformation->handleSuccess($partnerId, $this->syncContactId);
+    $responseHandler = new CRM_Odoosync_Sync_Contact_ResponseHandler();
+    $responseHandler->handleSuccess($partnerId, $this->syncContactId);
     $this->setLog(ts('Successful sync. Contact data updated.'));
   }
 
@@ -105,8 +105,8 @@ class CRM_Odoosync_Sync_Contact extends CRM_Odoosync_Sync_BaseHandler {
   private function handleErrorResponse($errorMessage) {
     $this->setJobLog(ts('Sync with error. Contact id = %1.', [1 => $this->syncContactId]));
 
-    $syncInformation = new CRM_Odoosync_Sync_Contact_ResponseHandler();
-    $isReachedRetryThreshold = $syncInformation->handleError(
+    $responseHandler = new CRM_Odoosync_Sync_Contact_ResponseHandler();
+    $isReachedRetryThreshold = $responseHandler->handleError(
       $errorMessage,
       $this->setting['odoosync_retry_threshold'],
       $this->syncContactId
