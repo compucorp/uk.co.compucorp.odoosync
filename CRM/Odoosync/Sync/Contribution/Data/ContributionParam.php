@@ -25,20 +25,15 @@ class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync
       $actionToSyncValueId
     );
     $contactId = $contributionData->contact_id;
-    $purchaseOrderNumber = $contributionData->purchase_order_number;
-    $accountCode = $this->getAccountCode();
+    $name = is_null($contributionData->purchase_order_number) ? $this->contributionId : $contributionData->purchase_order_number;
+    $accountCode = $contributionData->account_code;
     $currencyCode = $contributionData->currency;
 
     $contributionParams = [
       [
-        'name' => 'journal_code',
-        'type' => 'string',
-        'value' => ''
-      ],
-      [
         'name' => 'name',
         'type' => 'string',
-        'value' => $purchaseOrderNumber
+        'value' => $name
       ],
       [
         'name' => 'currency_code',
@@ -108,7 +103,16 @@ class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync
         purchase_order.purchase_order_number AS purchase_order_number,
         sync_info.action_to_sync AS action_to_sync, 
         sync_info.action_date AS action_date,
-        contribution.receive_date AS receive_date
+        contribution.receive_date AS receive_date,
+        (
+          SELECT financial_account.accounting_code 
+          FROM civicrm_entity_financial_account AS entity_financial_account
+          LEFT JOIN civicrm_financial_account AS financial_account
+            ON entity_financial_account.financial_account_id = financial_account.id
+          WHERE entity_financial_account.account_relationship = %2
+            AND entity_financial_account.entity_id = contribution.financial_type_id 
+          LIMIT 1
+        ) AS account_code
       FROM civicrm_contribution AS contribution
       LEFT JOIN purchase_order 
         ON contribution.id = purchase_order.entity_id
@@ -118,43 +122,16 @@ class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync
       LIMIT 1
     ";
 
-    $dao = CRM_Core_DAO::executeQuery($query, [1 => [$this->contributionId, 'Integer']]);
+    $dao = CRM_Core_DAO::executeQuery($query, [
+      1 => [$this->contributionId, 'Integer'],
+      2 => [self::ACCOUNT_RELATIONSHIP_ID, 'Integer']
+    ]);
 
     while ($dao->fetch()) {
       return $dao;
     }
 
     return NULL;
-  }
-
-  /**
-   * Gets account code
-   *
-   * @return int
-   */
-  public function getAccountCode() {
-    $query = "
-      SELECT financial_account.accounting_code AS account_code
-      FROM civicrm_entity_financial_account AS entity_financial_account
-      LEFT JOIN civicrm_contribution AS contribution
-        ON contribution.id = %2
-      LEFT JOIN civicrm_financial_account AS financial_account
-      	ON entity_financial_account.financial_account_id = financial_account.id
-      WHERE entity_financial_account.account_relationship = %1
-        AND entity_financial_account.entity_id = contribution.financial_type_id 
-      LIMIT 1
-      ";
-
-    $dao = CRM_Core_DAO::executeQuery($query, [
-      1 => [self::ACCOUNT_RELATIONSHIP_ID, 'Integer'],
-      2 => [$this->contributionId, 'Integer']
-    ]);
-
-    while ($dao->fetch()) {
-      return $dao->account_code;
-    }
-
-    return 0;
   }
 
 }

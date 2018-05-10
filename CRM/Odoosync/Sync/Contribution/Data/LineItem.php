@@ -27,11 +27,12 @@ class CRM_Odoosync_Sync_Contribution_Data_LineItem extends CRM_Odoosync_Sync_Con
     $lineItems = [];
     $lineItemsData = $this->generateItemsData();
     foreach ($lineItemsData as $lineItem) {
+      $taxNameList = is_null($lineItem['tax_name']) ? [] : [$lineItem['tax_name']];
       $lineItems[] = [
         [
           'name' => 'tax_name',
           'type' => 'string',
-          'value' => [$lineItem['tax_name']]
+          'value' => $taxNameList
         ],
         [
           'name' => 'account_code',
@@ -61,7 +62,7 @@ class CRM_Odoosync_Sync_Contribution_Data_LineItem extends CRM_Odoosync_Sync_Con
         [
           'name' => 'x_civicrm_id',
           'type' => 'int',
-          'value' => $lineItem['contact_id']
+          'value' => $lineItem['line_item_id']
         ],
         [
           'name' => 'quantity',
@@ -111,6 +112,7 @@ class CRM_Odoosync_Sync_Contribution_Data_LineItem extends CRM_Odoosync_Sync_Con
         contribution.contact_id AS contact_id,
         line_item.unit_price AS unit_price,
         line_item.line_total AS total,
+        line_item.id AS line_item_id,
         (
           SELECT financial_account.accounting_code
           FROM civicrm_entity_financial_account AS entity_financial_account
@@ -160,7 +162,8 @@ class CRM_Odoosync_Sync_Contribution_Data_LineItem extends CRM_Odoosync_Sync_Con
         'total' => $dao->total,
         'account_code' => (!is_null($dao->account_code)) ? $dao->account_code : '',
         'contact_id' => $dao->contact_id,
-        'tax_name' => (!is_null($dao->tax_name)) ? $dao->tax_name : '',
+        'tax_name' => (!is_null($dao->tax_name)) ? $dao->tax_name : NULL,
+        'line_item_id' => $dao->line_item_id,
         'unit_price' => $dao->unit_price
       ];
     }

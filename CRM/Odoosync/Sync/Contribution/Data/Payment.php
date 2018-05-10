@@ -29,24 +29,26 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
       SELECT 
         financial_trxn.id AS communication,
         financial_trxn.trxn_date AS payment_date,
-        financial_trxn.status_id AS status,
+        (
+          CASE  
+            WHEN 
+              financial_trxn.status_id = %2 OR financial_trxn.status_id = %3
+            THEN 
+              ''
+            ELSE
+              financial_trxn.status_id 
+            END
+        ) AS status,
         financial_trxn.currency AS currency_code,
         financial_trxn.is_payment AS is_payment,
         financial_trxn.total_amount AS amount,
-        (
-          SELECT financial_account.name AS account_code
-          FROM civicrm_entity_financial_account AS entity_financial_account
-          LEFT JOIN civicrm_financial_account AS financial_account
-            ON entity_financial_account.financial_account_id = financial_account.id
-          WHERE entity_financial_account.account_relationship = %4
-            AND entity_financial_account.entity_id = financial_trxn.to_financial_account_id
-          LIMIT 1
-        ) AS account_code
+        financial_account.name AS journal_name
       FROM civicrm_entity_financial_trxn AS entity_financial_trxn
       LEFT JOIN civicrm_financial_trxn AS financial_trxn
         ON entity_financial_trxn.financial_trxn_id = financial_trxn.id
-      WHERE (financial_trxn.status_id != %2 AND financial_trxn.status_id != %3)
-        AND entity_financial_trxn.entity_table = 'civicrm_contribution'
+      LEFT JOIN civicrm_financial_account AS financial_account
+        ON financial_trxn.to_financial_account_id = financial_account.id
+      WHERE entity_financial_trxn.entity_table = 'civicrm_contribution'
         AND entity_financial_trxn.entity_id = %1
         AND financial_trxn.is_payment = 1
     ";
@@ -68,7 +70,6 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
    */
   private function mappedItems($paymentItemsDao) {
     $paymentItems = [];
-    $accountCode = (new CRM_Odoosync_Sync_Contribution_Data_ContributionParam($this->contributionId))->getAccountCode();
 
     while ($paymentItemsDao->fetch()) {
       $paymentItems[] = [
@@ -88,9 +89,9 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
           'value' => $paymentItemsDao->amount
         ],
         [
-          'name' => 'journal_code',
+          'name' => 'journal_name',
           'type' => 'string',
-          'value' => $paymentItemsDao->account_code
+          'value' => $paymentItemsDao->journal_name
         ],
         [
           'name' => 'payment_date',
@@ -101,11 +102,6 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
           'name' => 'communication',
           'type' => 'string',
           'value' => $paymentItemsDao->communication
-        ],
-        [
-          'name' => 'account_code',
-          'type' => 'int',
-          'value' => $accountCode
         ],
         [
           'name' => 'x_civicrm_id',

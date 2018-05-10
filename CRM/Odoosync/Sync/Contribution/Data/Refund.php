@@ -6,7 +6,6 @@ class CRM_Odoosync_Sync_Contribution_Data_Refund extends CRM_Odoosync_Sync_Contr
    * Returns refund data
    *
    * @return mixed
-   * @throws \CiviCRM_API3_Exception
    */
   public function retrieve() {
     $refundItems = $this->generateItemsData();
@@ -18,23 +17,31 @@ class CRM_Odoosync_Sync_Contribution_Data_Refund extends CRM_Odoosync_Sync_Contr
    * Gets refund data
    *
    * @return array
-   * @throws \CiviCRM_API3_Exception
    */
   private function generateItemsData() {
     $refundedStatusValueId = CRM_Odoosync_Sync_Contribution_Data_Status::getRefundedValueId();
     $cancelledStatusValueId = CRM_Odoosync_Sync_Contribution_Data_Status::getCancelledValueId();
 
     $query = "
-    SELECT 
-      financial_trxn.trxn_date AS payment_date,
-      financial_trxn.status_id AS status_id
-    FROM civicrm_entity_financial_trxn AS entity_financial_trxn
-    LEFT JOIN civicrm_financial_trxn AS financial_trxn
-      ON entity_financial_trxn.financial_trxn_id = financial_trxn.id
-    WHERE (financial_trxn.status_id = %2 OR financial_trxn.status_id = %3)
-      AND entity_financial_trxn.entity_table = 'civicrm_contribution'
-      AND entity_financial_trxn.entity_id = %1
-  ";
+      SELECT 
+        financial_trxn.trxn_date AS payment_date,
+        (
+          CASE  
+            WHEN 
+              financial_trxn.status_id != %2 AND financial_trxn.status_id != %3
+            THEN 
+              ''
+            ELSE
+              financial_trxn.status_id 
+            END
+        ) AS status_id
+      FROM civicrm_entity_financial_trxn AS entity_financial_trxn
+      LEFT JOIN civicrm_financial_trxn AS financial_trxn
+        ON entity_financial_trxn.financial_trxn_id = financial_trxn.id
+      WHERE (financial_trxn.status_id = %2 OR financial_trxn.status_id = %3)
+        AND entity_financial_trxn.entity_table = 'civicrm_contribution'
+        AND entity_financial_trxn.entity_id = %1
+    ";
 
     $dao = CRM_Core_DAO::executeQuery($query, [
       1 => [$this->contributionId, 'Integer'],
