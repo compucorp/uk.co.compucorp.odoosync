@@ -20,9 +20,9 @@ class CRM_Odoosync_Sync_Request_Contribution {
   private $syncContributionResponse = [
     'is_error' => 0,
     'error_message' => '',
-    'invoice_number' => '0',
-    'creditnote_number' => '0',
-    'timestamp' => 0
+    'invoice_number' => NULL,
+    'creditnote_number' => NULL,
+    'timestamp' => NULL
   ];
 
   /**
@@ -84,13 +84,31 @@ class CRM_Odoosync_Sync_Request_Contribution {
    */
   private function parseResponse($response) {
     $parsedData = [];
-    foreach ($response->params->param->value->struct->member as $param) {
-      if ((string) $param->name == 'error_log') {
-        $parsedData[(string) $param->name] = $this->parseErrorLogMessage($param->value);
-        continue;
-      }
 
-      $parsedData[(string) $param->name] = (string) $param->value->int;
+    if (isset($response->params->param->value->struct->member)) {
+      foreach ($response->params->param->value->struct->member as $param) {
+        if ((string) $param->name == 'error_log') {
+          $parsedData[(string) $param->name] = $this->parseErrorLogMessage($param->value);
+          continue;
+        }
+
+        if ((string) $param->name == 'invoice_number' || (string) $param->name ==  'creditnote_number') {
+          $parsedData[(string) $param->name] = (string) $param->value->string;
+          continue;
+        }
+
+        if (
+          (string) $param->name == 'timestamp'
+          || (string) $param->name == 'is_error'
+          || (string) $param->name == 'contribution_id'
+        ) {
+          $parsedData[(string) $param->name] = (string) $param->value->int;
+        }
+      }
+    }
+    else {
+      $this->syncContributionResponse['is_error'] = 1;
+      $this->syncContributionResponse['error_message'] .= ts("Can't parse sync response.");
     }
 
     if (empty($response)) {
@@ -98,16 +116,12 @@ class CRM_Odoosync_Sync_Request_Contribution {
       $this->syncContributionResponse['error_message'] .= ts("Can't parse sync response.");
     }
 
-    if ($parsedData['is_error'] == 1) {
+    if (isset($parsedData['is_error']) && $parsedData['is_error'] == 1) {
       $this->syncContributionResponse['is_error'] = 1;
       $this->syncContributionResponse['error_message'] .= $parsedData['error_log'];
     }
 
     if (!empty($response)) {
-      if (isset($parsedData['contribution_id'])) {
-        $this->syncContributionResponse['invoice_number'] = $parsedData['contribution_id'];
-      }
-
       if (isset($parsedData['invoice_number'])) {
         $this->syncContributionResponse['invoice_number'] = $parsedData['invoice_number'];
       }
