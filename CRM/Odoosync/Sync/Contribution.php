@@ -22,7 +22,7 @@ class CRM_Odoosync_Sync_Contribution extends CRM_Odoosync_Sync_BaseHandler {
     $this->setJobLog(ts('Start Contribution Syncing ...'));
 
     $pendingContribution = new CRM_Odoosync_Sync_Contribution_PendingContribution();
-    $contributionIdList = $pendingContribution->getPendingContributions();
+    $contributionIdList = $pendingContribution->getIds();
 
     if (empty($contributionIdList)) {
       $this->setJobLog(ts('All Contributions are synced'));

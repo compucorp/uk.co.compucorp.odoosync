@@ -5,16 +5,16 @@ class CRM_Odoosync_Sync_Contribution_Data_Status {
   /**
    * Contribution Refunded status 'value ID'
    *
-   * @return bool|string
+   * @return NULL|string
    */
-  private static $refundedValueId = FALSE;
+  private static $refundedValueId = NULL;
 
   /**
    * Contribution cancelled status 'value ID'
    *
-   * @return bool|string
+   * @return NULL|string
    */
-  private static $cancelledValueId = FALSE;
+  private static $cancelledValueId = NULL;
 
   /**
    * Gets contribution refunded status 'value ID'
@@ -22,7 +22,7 @@ class CRM_Odoosync_Sync_Contribution_Data_Status {
    * @return string
    */
   public static function getRefundedValueId() {
-    if (!self::$refundedValueId) {
+    if (is_null(self::$refundedValueId)) {
       self::$refundedValueId = CRM_Odoosync_Common_OptionValue::getOptionValueID('contribution_status', 'Refunded');
     }
 
@@ -35,7 +35,7 @@ class CRM_Odoosync_Sync_Contribution_Data_Status {
    * @return string
    */
   public static function getCancelledValueId() {
-    if (!self::$cancelledValueId) {
+    if (is_null(self::$cancelledValueId)) {
       self::$cancelledValueId = CRM_Odoosync_Common_OptionValue::getOptionValueID('contribution_status', 'Cancelled');
     }
 

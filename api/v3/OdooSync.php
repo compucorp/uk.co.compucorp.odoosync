@@ -9,22 +9,7 @@
  * @throws \Exception
  */
 function civicrm_api3_odoo_sync_run($params) {
-  $log = [];
-  $logContact = (new CRM_Odoosync_Sync_Contact($params))->run();
-  $logContribution = (new CRM_Odoosync_Sync_Contribution($params))->run();
-
-  $log['is_error'] = ($logContact['is_error'] == 1 || $logContact['is_error'] == 1) ? 1 : 0;
-
-  //more detail log can view in api when debug = 1
-  if ($params['debug'] == 1) {
-    $log['debugLog']['contacts_debug_log'] = $logContact['debugLog'];
-    $log['debugLog']['contribution_debug_log'] = $logContribution['debugLog'];
-  }
-
-  //this log can view on schedule job
-  $log['values'] = '<br/>' . $logContact['values'] . $logContribution['values'];
-
-  return $log;
+  return (new CRM_Odoosync_Sync())->run($params);
 }
 
 /**

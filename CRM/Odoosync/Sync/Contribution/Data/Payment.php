@@ -29,16 +29,7 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
       SELECT 
         financial_trxn.id AS communication,
         financial_trxn.trxn_date AS payment_date,
-        (
-          CASE  
-            WHEN 
-              financial_trxn.status_id = %2 OR financial_trxn.status_id = %3
-            THEN 
-              ''
-            ELSE
-              financial_trxn.status_id 
-            END
-        ) AS status,
+        financial_trxn.status_id AS status,
         financial_trxn.currency AS currency_code,
         financial_trxn.is_payment AS is_payment,
         financial_trxn.total_amount AS amount,
@@ -57,7 +48,7 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
       1 => [$this->contributionId, 'Integer'],
       2 => [$refundedStatusValueId, 'String'],
       3 => [$cancelledStatusValueId, 'String'],
-      4 => [CRM_Odoosync_Sync_Contribution_Data_LineItem::SALES_ACCOUNT_RELATIONSHIP_ID, 'Integer']
+      4 => [CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip::getSalesTaxAccountRelationshipId(), 'Integer']
     ]);
 
     return $dao;
@@ -76,7 +67,7 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
         [
           'name' => 'status',
           'type' => 'string',
-          'value' => $paymentItemsDao->status
+          'value' => $this->generateStatus($paymentItemsDao->status)
         ],
         [
           'name' => 'is_payment',
@@ -117,6 +108,24 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
     }
 
     return $paymentItems;
+  }
+
+  /**
+   * Calculates status
+   *
+   * @param $statusId
+   *
+   * @return string
+   */
+  private function generateStatus($statusId) {
+    if (
+      $statusId == CRM_Odoosync_Sync_Contribution_Data_Status::getRefundedValueId()
+      || $statusId == CRM_Odoosync_Sync_Contribution_Data_Status::getCancelledValueId()
+    ) {
+      return '';
+    }
+
+    return $statusId;
   }
 
 }

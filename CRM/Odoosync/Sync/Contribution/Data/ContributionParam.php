@@ -3,13 +3,6 @@
 class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync_Sync_Contribution_Data {
 
   /**
-   * Account relationship id
-   *
-   * @var int
-   */
-  const ACCOUNT_RELATIONSHIP_ID = 3;
-
-  /**
    * Gets the contribution's params
    *
    * @return array
@@ -124,7 +117,7 @@ class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync
 
     $dao = CRM_Core_DAO::executeQuery($query, [
       1 => [$this->contributionId, 'Integer'],
-      2 => [self::ACCOUNT_RELATIONSHIP_ID, 'Integer']
+      2 => [CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip::getAccountsReceivableAccountRelationshipId(), 'Integer']
     ]);
 
     while ($dao->fetch()) {

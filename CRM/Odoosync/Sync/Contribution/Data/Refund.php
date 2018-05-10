@@ -25,16 +25,7 @@ class CRM_Odoosync_Sync_Contribution_Data_Refund extends CRM_Odoosync_Sync_Contr
     $query = "
       SELECT 
         financial_trxn.trxn_date AS payment_date,
-        (
-          CASE  
-            WHEN 
-              financial_trxn.status_id != %2 AND financial_trxn.status_id != %3
-            THEN 
-              ''
-            ELSE
-              financial_trxn.status_id 
-            END
-        ) AS status_id
+        financial_trxn.status_id AS status_id
       FROM civicrm_entity_financial_trxn AS entity_financial_trxn
       LEFT JOIN civicrm_financial_trxn AS financial_trxn
         ON entity_financial_trxn.financial_trxn_id = financial_trxn.id

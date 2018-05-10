@@ -40,7 +40,7 @@ class CRM_Odoosync_Sync_Contribution_PendingContribution {
    *
    * @return array
    */
-  public function getPendingContributions() {
+  public function getIds() {
     $syncSetting = CRM_Odoosync_Setting::getInstance()->retrieve();
 
     try {

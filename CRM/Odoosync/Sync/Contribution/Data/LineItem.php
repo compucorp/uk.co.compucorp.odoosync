@@ -3,22 +3,6 @@
 class CRM_Odoosync_Sync_Contribution_Data_LineItem extends CRM_Odoosync_Sync_Contribution_Data {
 
   /**
-   * Account relationship id
-   * (Income Account is)
-   *
-   * @var int
-   */
-  const INCOME_ACCOUNT_RELATIONSHIP_ID = 1;
-
-  /**
-   * Account relationship id
-   * (Sales Tax Account is)
-   *
-   * @var int
-   */
-  const SALES_ACCOUNT_RELATIONSHIP_ID = 10;
-
-  /**
    * Gets line item params
    *
    * @return array
@@ -83,30 +67,7 @@ class CRM_Odoosync_Sync_Contribution_Data_LineItem extends CRM_Odoosync_Sync_Con
   private function generateItemsData() {
     $query = "
       SELECT 
-        (
-          CASE  
-            WHEN 
-              line_item.entity_table = 'civicrm_participant'
-            THEN 
-              'CVEVT'
-            WHEN 
-              line_item.entity_table = 'civicrm_membership'
-            THEN 
-              'CVMEM'
-            WHEN 
-              line_item.entity_table = 'civicrm_booking_slot'
-              OR line_item.entity_table = 'civicrm_booking_sub_slot'
-              OR line_item.entity_table = 'civicrm_booking_adhoc_charges'
-            THEN 
-              'CVBK'
-            WHEN 
-              line_item.entity_table = 'civicrm_contribution'
-            THEN 
-              'CVCTB'
-            ELSE
-              '' 
-            END
-        ) AS product_code,
+        line_item.entity_table AS entity_table,
         line_item.label AS label,
         line_item.qty AS quantity,
         contribution.contact_id AS contact_id,
@@ -136,27 +97,27 @@ class CRM_Odoosync_Sync_Contribution_Data_LineItem extends CRM_Odoosync_Sync_Con
           ON contribution.id = %1
       WHERE line_item.contribution_id = %1
         AND 
-          (
-            line_item.entity_table = 'civicrm_participant' OR
-            line_item.entity_table = 'civicrm_membership' OR
-            line_item.entity_table = 'civicrm_booking_slot' OR
-            line_item.entity_table = 'civicrm_booking_sub_slot' OR
-            line_item.entity_table = 'civicrm_booking_adhoc_charges' OR
-            line_item.entity_table = 'civicrm_contribution'
+            line_item.entity_table IN (
+            'civicrm_participant',
+            'civicrm_membership',
+            'civicrm_booking_slot',
+            'civicrm_booking_sub_slot',
+            'civicrm_booking_adhoc_charges',
+            'civicrm_contribution'
           )
     ";
 
     $dao = CRM_Core_DAO::executeQuery($query, [
       1 => [$this->contributionId, 'Integer'],
-      2 => [self::INCOME_ACCOUNT_RELATIONSHIP_ID, 'Integer'],
-      3 => [self::SALES_ACCOUNT_RELATIONSHIP_ID, 'Integer']
+      2 => [CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip::getIncomeAccountRelationshipId(), 'Integer'],
+      3 => [CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip::getSalesTaxAccountRelationshipId(), 'Integer']
     ]);
 
     $lineItemList = [];
 
     while ($dao->fetch()) {
       $lineItemList[] = [
-        'product_code' => $dao->product_code,
+        'product_code' => $this->calculateProductCode($dao->entity_table),
         'label' => $dao->label,
         'quantity' => $dao->quantity,
         'total' => $dao->total,
@@ -169,6 +130,40 @@ class CRM_Odoosync_Sync_Contribution_Data_LineItem extends CRM_Odoosync_Sync_Con
     }
 
     return $lineItemList;
+  }
+
+  /**
+   * Calculates product code
+   *
+   * @param $entityTable
+   *
+   * @return string
+   */
+  private function calculateProductCode($entityTable) {
+    switch ($entityTable) {
+      case "civicrm_participant":
+        $productCode = "THEN";
+        break;
+
+      case "civicrm_membership":
+        $productCode = "CVMEM";
+        break;
+
+      case "civicrm_booking_slot":
+      case "civicrm_booking_sub_slot":
+      case "civicrm_booking_adhoc_charges":
+        $productCode = "CVBK";
+        break;
+
+      case "civicrm_contribution":
+        $productCode = "CVCTB";
+        break;
+
+      default:
+        $productCode = "";
+    }
+
+    return $productCode;
   }
 
 }
