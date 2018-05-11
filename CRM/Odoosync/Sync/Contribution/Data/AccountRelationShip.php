@@ -28,7 +28,7 @@ class CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip {
    *
    * @return string
    */
-  public static function getIncomeAccountRelationshipId() {
+  public static function getIncomeAccountId() {
     if (is_null(self::$incomeAccountRelationshipId)) {
       self::$incomeAccountRelationshipId = CRM_Odoosync_Common_OptionValue::getOptionValueID(
         'account_relationship',
@@ -44,7 +44,7 @@ class CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip {
    *
    * @return string
    */
-  public static function getAccountsReceivableAccountRelationshipId() {
+  public static function getAccountsReceivableId() {
     if (is_null(self::$accountsReceivableAccountRelationshipId)) {
       self::$accountsReceivableAccountRelationshipId = CRM_Odoosync_Common_OptionValue::getOptionValueID(
         'account_relationship',
@@ -60,7 +60,7 @@ class CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip {
    *
    * @return string
    */
-  public static function getSalesTaxAccountRelationshipId() {
+  public static function getSalesTaxAccountId() {
     if (is_null(self::$salesTaxAccountRelationshipId)) {
       self::$salesTaxAccountRelationshipId = CRM_Odoosync_Common_OptionValue::getOptionValueID(
         'account_relationship',

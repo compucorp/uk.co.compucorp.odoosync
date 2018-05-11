@@ -109,8 +109,8 @@ class CRM_Odoosync_Sync_Contribution_Data_LineItem extends CRM_Odoosync_Sync_Con
 
     $dao = CRM_Core_DAO::executeQuery($query, [
       1 => [$this->contributionId, 'Integer'],
-      2 => [CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip::getIncomeAccountRelationshipId(), 'Integer'],
-      3 => [CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip::getSalesTaxAccountRelationshipId(), 'Integer']
+      2 => [CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip::getIncomeAccountId(), 'Integer'],
+      3 => [CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip::getSalesTaxAccountId(), 'Integer']
     ]);
 
     $lineItemList = [];
@@ -142,7 +142,7 @@ class CRM_Odoosync_Sync_Contribution_Data_LineItem extends CRM_Odoosync_Sync_Con
   private function calculateProductCode($entityTable) {
     switch ($entityTable) {
       case "civicrm_participant":
-        $productCode = "THEN";
+        $productCode = "CVEVT";
         break;
 
       case "civicrm_membership":

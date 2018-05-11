@@ -117,7 +117,7 @@ class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync
 
     $dao = CRM_Core_DAO::executeQuery($query, [
       1 => [$this->contributionId, 'Integer'],
-      2 => [CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip::getAccountsReceivableAccountRelationshipId(), 'Integer']
+      2 => [CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip::getAccountsReceivableId(), 'Integer']
     ]);
 
     while ($dao->fetch()) {

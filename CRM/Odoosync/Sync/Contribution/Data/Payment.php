@@ -48,7 +48,7 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
       1 => [$this->contributionId, 'Integer'],
       2 => [$refundedStatusValueId, 'String'],
       3 => [$cancelledStatusValueId, 'String'],
-      4 => [CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip::getSalesTaxAccountRelationshipId(), 'Integer']
+      4 => [CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip::getSalesTaxAccountId(), 'Integer']
     ]);
 
     return $dao;
