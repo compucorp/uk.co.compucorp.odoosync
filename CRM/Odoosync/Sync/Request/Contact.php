@@ -56,7 +56,7 @@ class CRM_Odoosync_Sync_Request_Contact {
     }
 
     $url = $this->setting['odoosync_odoo_instance_url'] . self::ODOO_API_ENDPOINT;
-    $xml = CRM_Odoosync_Sync_Request_XmlGenerator::generateSyncOdooXml(
+    $xml = CRM_Odoosync_Sync_Request_XmlGenerator::generateContactSyncOdooXml(
       $this->setting['odoosync_database_name'],
       $this->setting['odoosync_password'],
       'execute_kw',
@@ -95,7 +95,7 @@ class CRM_Odoosync_Sync_Request_Contact {
 
     if (empty($response)) {
       $this->syncContactResponse['is_error'] = 1;
-      $this->syncContactResponse['error_message'] .= ts('Cant parse sync response.');
+      $this->syncContactResponse['error_message'] .= ts("Can't parse sync response.");
     }
 
     if ($parsedData['is_error'] == 1) {
@@ -107,6 +107,10 @@ class CRM_Odoosync_Sync_Request_Contact {
       $this->syncContactResponse['partner_id'] = $parsedData['partner_id'];
       $this->syncContactResponse['timestamp'] = $parsedData['timestamp'];
       $this->syncContactResponse['contact_id'] = $parsedData['contact_id'];
+    }
+    else {
+      $this->syncContactResponse['is_error'] = 1;
+      $this->syncContactResponse['error_message'] .= ts('Empty response.');
     }
 
     return $this->syncContactResponse;

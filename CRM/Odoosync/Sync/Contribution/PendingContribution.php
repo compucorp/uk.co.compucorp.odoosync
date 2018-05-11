@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Gets appropriate contacts for synchronization with Odoo
+ * Gets appropriate contribution for synchronization with Odoo
  */
-class CRM_Odoosync_Sync_Contact_PendingContacts {
+class CRM_Odoosync_Sync_Contribution_PendingContribution {
 
   /**
-   * Sync contact id
+   * Sync contribution id
    *
    * @var int
    */
@@ -20,13 +20,13 @@ class CRM_Odoosync_Sync_Contact_PendingContacts {
   private $syncStatusValue;
 
   /**
-   * CRM_Odoosync_Sync_Contact_PendingContacts constructor.
+   * CRM_Odoosync_Sync_Contribution_PendingContribution constructor.
    *
    * @throws \CiviCRM_API3_Exception
    */
   public function __construct() {
     $this->syncStatusFieldId = CRM_Odoosync_Common_CustomField::getCustomFieldId(
-      'odoo_partner_sync_information',
+      'odoo_invoice_sync_information',
       'sync_status'
     );
     $this->syncStatusValue = CRM_Odoosync_Common_OptionValue::getOptionValueID(
@@ -36,27 +36,27 @@ class CRM_Odoosync_Sync_Contact_PendingContacts {
   }
 
   /**
-   * Gets non-synchronized contact Ids
+   * Gets non-synchronized contribution Ids
    *
    * @return array
    */
-  public function getPendingContacts() {
+  public function getIds() {
     $syncSetting = CRM_Odoosync_Setting::getInstance()->retrieve();
 
     try {
-      $contactList = civicrm_api3('Contact', 'get', [
+      $contributionList = civicrm_api3('Contribution', 'get', [
         'return' => ["id"],
         'is_deleted' => ['IS NOT NULL' => 1],
         'options' => ['limit' => (int) $syncSetting['odoosync_batch_size']],
         'custom_' . $this->syncStatusFieldId => $this->syncStatusValue,
       ]);
 
-      $contactListId = [];
-      foreach ($contactList['values'] as $contact) {
-        $contactListId[] = $contact['contact_id'];
+      $contributionListId = [];
+      foreach ($contributionList['values'] as $contribution) {
+        $contributionListId[] = $contribution['contribution_id'];
       }
 
-      return $contactListId;
+      return $contributionListId;
     }
     catch (CiviCRM_API3_Exception $e) {
       return [];

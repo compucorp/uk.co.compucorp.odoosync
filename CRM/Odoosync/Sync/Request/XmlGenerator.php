@@ -29,32 +29,39 @@ class CRM_Odoosync_Sync_Request_XmlGenerator {
   }
 
   /**
-   * Generates xml for sync to Odoo
+   * Generates xml group tag 'param' and fills it
+   *
+   * @param \SimpleXMLElement $parentElement
+   * @param string $type
+   * @param string $value
+   */
+  private static function generateTagParam(&$parentElement, $type, $value) {
+    $param = $parentElement->addChild('param');
+    $valueElement = $param->addChild('value');
+    $valueElement->addChild($type, $value);
+  }
+
+  /**
+   * Generates xml for contact sync to Odoo
    *
    * @param string $database
    * @param string $password
    * @param string $methodName
    * @param string $odooUserId
+   * @param array $sendData
    *
    * @return string
    */
-  public static function generateSyncOdooXml($database, $password, $methodName, $odooUserId, $sendData) {
+  public static function generateContactSyncOdooXml($database, $password, $methodName, $odooUserId, $sendData) {
     $xml = new SimpleXMLElement('<methodCall/>');
-    $xml->addChild('methodName', $methodName);
-    $params = $xml->addChild('params');
-
-    self::generateTagParam($params, 'string', $database);
-    self::generateTagParam($params, 'int', $odooUserId);
-    self::generateTagParam($params, 'string', $password);
-    self::generateTagParam($params, 'string', 'res.partner');
-    self::generateTagParam($params, 'string', 'civicrm_sync');
-
-    $param = $params->addChild('param');
-    $valueElement = $param->addChild('value');
-    $arrayElement = $valueElement->addChild('array');
-    $dataElement = $arrayElement->addChild('data');
-    $valueElement = $dataElement->addChild('value');
-    $struct = $valueElement->addChild('struct');
+    $struct = self::generateGeneralInformation(
+      $xml,
+      $database,
+      $password,
+      $methodName,
+      $odooUserId,
+      'res.partner'
+    );
 
     self::generateTagMember($struct, 'website', 'string', $sendData['website']);
     self::generateTagMember($struct, 'city', 'string', $sendData['city']);
@@ -80,6 +87,37 @@ class CRM_Odoosync_Sync_Request_XmlGenerator {
   }
 
   /**
+   * Generates general information for Odoo API
+   *
+   * @param $xml
+   * @param $database
+   * @param $password
+   * @param $methodName
+   * @param $odooUserId
+   *
+   * @return mixed
+   */
+  private static function generateGeneralInformation(&$xml, $database, $password, $methodName, $odooUserId, $odooHandler) {
+    $xml->addChild('methodName', $methodName);
+    $params = $xml->addChild('params');
+
+    self::generateTagParam($params, 'string', $database);
+    self::generateTagParam($params, 'int', $odooUserId);
+    self::generateTagParam($params, 'string', $password);
+    self::generateTagParam($params, 'string', $odooHandler);
+    self::generateTagParam($params, 'string', 'civicrm_sync');
+
+    $param = $params->addChild('param');
+    $valueElement = $param->addChild('value');
+    $arrayElement = $valueElement->addChild('array');
+    $dataElement = $arrayElement->addChild('data');
+    $valueElement = $dataElement->addChild('value');
+    $struct = $valueElement->addChild('struct');
+
+    return $struct;
+  }
+
+  /**
    * Generates xml group tag 'member' and fills it
    *
    * @param \SimpleXMLElement $parentElement
@@ -90,21 +128,74 @@ class CRM_Odoosync_Sync_Request_XmlGenerator {
   private static function generateTagMember(&$parentElement, $nameValue, $type, $value) {
     $member = $parentElement->addChild('member');
     $member->addChild('name', $nameValue);
-    $valueElement = $member->addChild('value');
-    $valueElement->addChild($type, $value);
+    $mainValueElement = $member->addChild('value');
+
+    if (is_array($value)) {
+      $arrayElement = $mainValueElement->addChild('array');
+      foreach ($value as $singleValue) {
+        $dataElement = $arrayElement->addChild('data');
+        $valueElement = $dataElement->addChild('value');
+        $valueElement->addChild($type, $singleValue);
+      }
+    }
+    else {
+      $mainValueElement->addChild($type, $value);
+    }
   }
 
   /**
-   * Generates xml group tag 'param' and fills it
+   * Generates xml for contribution sync to Odoo
    *
-   * @param \SimpleXMLElement $parentElement
-   * @param string $type
-   * @param string $value
+   * @param string $database
+   * @param string $password
+   * @param string $methodName
+   * @param string $odooUserId
+   * @param array $sendData
+   *
+   * @return string
    */
-  private static function generateTagParam(&$parentElement, $type, $value) {
-    $param = $parentElement->addChild('param');
-    $valueElement = $param->addChild('value');
-    $valueElement->addChild($type, $value);
+  public static function generateContributionSyncOdooXml($database, $password, $methodName, $odooUserId, $sendData) {
+    $xml = new SimpleXMLElement('<methodCall/>');
+    $struct = self::generateGeneralInformation(
+      $xml,
+      $database,
+      $password,
+      $methodName,
+      $odooUserId,
+      'account.invoice'
+    );
+
+    self::generateEntityItems($struct, $sendData['lineItems'],'line_items');
+    self::generateEntityItems($struct, $sendData['paymentList'],'payments');
+    self::generateEntityItems($struct, $sendData['refundList'], 'refund');
+    foreach ($sendData['contributionParams'] as $param) {
+      self::generateTagMember($struct, $param['name'], $param['type'], $param['value']);
+    }
+
+    return $xml->asXML();
+  }
+
+  /**
+   * Generates xml entity items
+   *
+   * @param $parentElement
+   * @param $entityList
+   * @param $entityName
+   */
+  private static function generateEntityItems(&$parentElement, $entityList, $entityName) {
+    $member = $parentElement->addChild('member');
+    $member->addChild('name', $entityName);
+    $valueElement = $member->addChild('value');
+    $mainArrayElement = $valueElement->addChild('array');
+
+    foreach ($entityList as $entityItem) {
+      $dataElement = $mainArrayElement->addChild('data');
+      $valueElement = $dataElement->addChild('value');
+      $struct = $valueElement->addChild('struct');
+      foreach ($entityItem as $param) {
+        self::generateTagMember($struct, $param['name'], $param['type'], $param['value']);
+      }
+    }
   }
 
   /**
