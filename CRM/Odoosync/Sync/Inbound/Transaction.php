@@ -10,7 +10,10 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
    *
    * @var array
    */
-  private $syncResponse = ['is_error' => 0];
+  private $syncResponse = [
+    'is_error' => 0,
+    'error_message' => ''
+  ];
 
   /**
    * Starts transaction sync from Odoo
@@ -18,22 +21,24 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
    */
   public function run() {
     $inboundData = trim(file_get_contents('php://input'));
-    $response = CRM_Odoosync_Sync_Request_XmlGenerator::xmlToObject($inboundData);
-    $params = [];
+    $inboundXmlObject = CRM_Odoosync_Sync_Request_XmlGenerator::xmlToObject($inboundData);
 
-    if (!$response) {
+    if (!$inboundXmlObject) {
       $this->syncResponse['is_error'] = 1;
-      $this->syncResponse['error_message'] = ts('Can\'t parse a XML response.');
-    }
-    else {
-      $params = $this->parseResponse($response);
-      $this->validateParams($params);
+      $this->syncResponse['error_message'] = ts("Can't parse a XML request.");
+      $this->returnResponse();
+      return;
     }
 
-    if (!$this->syncResponse['is_error']) {
-      $this->syncTransactions($params);
+    $params = $this->parseInbound($inboundXmlObject);
+    $validatedParams = $this->validateParams($params);
+
+    if (!$validatedParams) {
+      $this->returnResponse();
+      return;
     }
 
+    $this->syncTransactions($validatedParams);
     $this->returnResponse();
   }
 
@@ -44,7 +49,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
    *
    * @return array
    */
-  private function parseResponse($response) {
+  private function parseInbound($response) {
     $parsedData = [];
 
     if (isset($response->params->param->value->struct->financial_trxn)) {
@@ -68,29 +73,90 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
    *
    * @param array $params
    *
-   * @throws \CiviCRM_API3_Exception
-   * @throws \CRM_Core_Exception
+   * @return array|bool
    */
-  private function validateParams(&$params) {
-    $requiredParameters = [
-      'to_financial_account_id' => 'String',
-      'total_amount' => 'String',
-      'trxn_date' => 'String',
-      'currency' => 'String',
-    ];
+  private function validateParams($params) {
+    $fields = ["total_amount", "trxn_date", "invoice_id", "currency", "to_financial_account_name"];
+    $validParam = [];
 
-    foreach ($requiredParameters as $param => $type) {
-      $params[$param] = CRM_Utils_Type::validate(CRM_Utils_Array::value($param, $params), $type);
+    foreach ($fields as $fieldName) {
+      if (isset($params[$fieldName])) {
+        $validParam[$fieldName] = trim($params[$fieldName]);
+      }
+      else {
+        $this->syncResponse['is_error'] = 1;
+        $this->syncResponse['error_message'] = ts("%1 is required field", [1 => $fieldName]);
+        return FALSE;
+      }
     }
-    $params['to_financial_account_id'] = civicrm_api3('FinancialAccount', 'getvalue', [
-      'return' => "id",
-      'name' => $params['to_financial_account_id'],
-    ]);
 
-    if (empty($params['to_financial_account_id'])) {
+    $contributionId = $validParam['invoice_id'];
+    $toFinancialAccountName = $validParam['to_financial_account_name'];
+    $toFinancialAccountId = $this->getFinancialAccountId($toFinancialAccountName);
+
+    if (!$this->isContributionExist($contributionId)) {
       $this->syncResponse['is_error'] = 1;
-      $this->syncResponse['error_message'] = ts('Can not find a Financial Account');
+      $this->syncResponse['error_message'] = ts("Contribution(id = %1) doesn't exist.", [1 => $contributionId]);
+      return FALSE;
     }
+
+    if (!$toFinancialAccountId) {
+      $this->syncResponse['is_error'] = 1;
+      $this->syncResponse['error_message'] = ts("Financial account('%1') doesn't exist.", [1 => $toFinancialAccountName]);
+      return FALSE;
+    }
+
+    return [
+      'to_financial_account_id' => $toFinancialAccountId,
+      'total_amount' => $validParam['total_amount'],
+      'trxn_date' => CRM_Odoosync_Common_Date::convertTimestampToDate($validParam['trxn_date']),
+      'currency' => $validParam['currency'],
+      'contribution_id' => $contributionId,
+      'status_id' => "Completed",
+      'payment_instrument_id' => "Cash"
+    ];
+  }
+
+  /**
+   * Gets financial account id
+   *
+   * @param string $financialAccountName
+   *
+   * @return array|bool
+   */
+  private function getFinancialAccountId($financialAccountName) {
+    try {
+      $financialAccount = civicrm_api3('FinancialAccount', 'getvalue', [
+        'return' => "id",
+        'name' => $financialAccountName,
+      ]);
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      return FALSE;
+    }
+
+    return $financialAccount;
+  }
+
+  /**
+   * Checks whether there is a contribution
+   *
+   * @param $contributionId
+   *
+   * @return bool
+   */
+  public function isContributionExist($contributionId) {
+    try {
+      $contribution = civicrm_api3('Contribution', 'getsingle', [
+        'return' => "id",
+        'id' => $contributionId
+      ]);
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      return FALSE;
+    }
+
+    return TRUE;
   }
 
   /**
@@ -98,23 +164,72 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
    *
    * @param array $params
    */
-  protected function syncTransactions($params) {
-    $transaction = CRM_Core_BAO_FinancialTrxn::create($params);
+  private function syncTransactions($params) {
+    $financialTrxnId = $this->createFinancialTrxn($params);
 
-    if (!$transaction) {
-      $this->syncResponse['is_error'] = 1;
-      $this->syncResponse['error_message'] = ts('Can not create a transaction');
+    if (!$financialTrxnId ) {
+      return;
     }
-    else {
-      $this->syncResponse['transaction_id'] = $transaction->id;
-      $this->syncResponse['timestamp'] = time();
+
+    $connectTransaction = $this->connectTransactionToContribution(
+      $financialTrxnId,
+      $params['contribution_id'],
+      $params['total_amount']
+    );
+
+    $this->syncResponse['transaction_id'] = $financialTrxnId;
+    $this->syncResponse['timestamp'] = time();
+  }
+
+  /**
+   * Creates financial transaction
+   *
+   * @param $params
+   *
+   * @return bool|int
+   */
+  private function createFinancialTrxn($params) {
+    try {
+      $financialTrxn = civicrm_api3('FinancialTrxn', 'create', $params);
+      return (int) $financialTrxn["id"];
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      $this->syncResponse['is_error'] = 1;
+      $this->syncResponse['error_message'] = ts("Can't create financial transaction");
+      return FALSE;
+    }
+  }
+
+  /**
+   * Creates connect transaction to contribution
+   *
+   * @param $financialTrxnId
+   * @param $contributionId
+   * @param $amount
+   *
+   * @return bool
+   */
+  private function connectTransactionToContribution($financialTrxnId, $contributionId, $amount) {
+    try {
+      $entityFinancialTrxn = civicrm_api3('EntityFinancialTrxn', 'create', [
+        'entity_table' => "civicrm_contribution",
+        'entity_id' => (int)$contributionId,
+        'financial_trxn_id' => (int)$financialTrxnId,
+        'amount' => (int) $amount
+      ]);
+      return true;
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      $this->syncResponse['is_error'] = 1;
+      $this->syncResponse['error_message'] = ts("Can't create connect transaction to contribution");
+      return FALSE;
     }
   }
 
   /**
    * Outputs XML response
    */
-  protected function returnResponse() {
+  private function returnResponse() {
     $xml = new SimpleXMLElement('<ResultSet/>');
     $result = $xml->addChild('Result');
 

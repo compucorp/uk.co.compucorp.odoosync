@@ -58,7 +58,6 @@ function _civicrm_api3_odoo_sync_send_error_message_spec(&$params) {
  * @throws \Exception
  */
 function civicrm_api3_odoo_sync_transaction($params) {
-  $sync = new CRM_Odoosync_Sync_Inbound_Transaction();
-
-  $sync->run();
+  $transactionSync = new CRM_Odoosync_Sync_Inbound_Transaction();
+  $transactionSync->run();
 }
