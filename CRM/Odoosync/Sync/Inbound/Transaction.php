@@ -145,7 +145,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
    *
    * @return bool
    */
-  public function isContributionExist($contributionId) {
+  private function isContributionExist($contributionId) {
     try {
       $contribution = civicrm_api3('Contribution', 'getsingle', [
         'return' => "id",
@@ -171,7 +171,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
       return;
     }
 
-    $connectTransaction = $this->connectTransactionToContribution(
+    $connectTransaction = $this->createEntityFinancialTrxn(
       $financialTrxnId,
       $params['contribution_id'],
       $params['total_amount']
@@ -209,7 +209,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
    *
    * @return bool
    */
-  private function connectTransactionToContribution($financialTrxnId, $contributionId, $amount) {
+  private function createEntityFinancialTrxn($financialTrxnId, $contributionId, $amount) {
     try {
       $entityFinancialTrxn = civicrm_api3('EntityFinancialTrxn', 'create', [
         'entity_table' => "civicrm_contribution",
