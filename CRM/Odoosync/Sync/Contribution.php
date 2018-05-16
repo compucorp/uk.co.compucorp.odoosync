@@ -18,6 +18,10 @@ class CRM_Odoosync_Sync_Contribution extends CRM_Odoosync_Sync_BaseHandler {
    * @throws \CiviCRM_API3_Exception
    */
   protected function startSync() {
+    if (CRM_Odoosync_Sync_BatchSize::getCurrentButchSize() <= 0) {
+      return $this->getDebuggingData();
+    }
+
     $this->setLog(ts('Start Contribution Syncing ...'));
     $this->setJobLog(ts('Start Contribution Syncing ...'));
 
