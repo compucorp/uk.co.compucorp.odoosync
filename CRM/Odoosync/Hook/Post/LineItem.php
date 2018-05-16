@@ -12,6 +12,10 @@ class CRM_Odoosync_Hook_Post_LineItem extends CRM_Odoosync_Hook_Post_Base {
    */
   public function process() {
     $contributionId = $this->objectRef->contribution_id;
+    if (!$contributionId) {
+      return;
+    }
+
     if (!$this->isSyncStatusSynced($contributionId)) {
       return;
     }
