@@ -141,14 +141,6 @@ function odoosync_civicrm_navigationMenu(&$menu) {
 }
 
 /**
- * Implements hook_civicrm_postProcess().
- */
-function odoosync_civicrm_postProcess($formName, &$form) {
-  $syncInformationUpdater = new CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater($formName, $form);
-  $syncInformationUpdater->updateSyncInfo();
-}
-
-/**
  * Implements hook_civicrm_pre().
  */
 function odoosync_civicrm_pre($op, $objectName, $id, &$params) {
@@ -183,6 +175,22 @@ function odoosync_civicrm_post($op, $objectName, $objectId, &$objectRef) {
   ) {
     $lineItem = new CRM_Odoosync_Hook_Post_LineItem($op, $objectName, $objectId, $objectRef);
     $lineItem->process();
+  }
+
+  //Contact
+  if ($objectName = 'Contact'
+    && ($op == 'create' || $op == 'edit' || $op == 'delete'|| $op == 'trash'|| $op == 'restore')
+  ) {
+    if (isset($objectRef->contact_id)) {
+      $actionToSync = ($op == 'create') ? 'create' : 'update';
+      $syncInformation = new CRM_Odoosync_Contact_SyncInformationUpdater(
+        $objectRef->contact_id,
+        'awaiting_sync',
+        $actionToSync,
+        (new DateTime())->format('Y-m-d H:i:s')
+      );
+      $syncInformation->updateSyncInfo();
+    }
   }
 
 }
