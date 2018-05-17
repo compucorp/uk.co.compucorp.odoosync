@@ -3,18 +3,18 @@
 class CRM_Odoosync_Sync_BatchSize {
 
   /**
-   * Current butch size
+   * Current batch size
    *
    * @var int|NULL
    */
   private static $currentBatchSize = NULL;
 
   /**
-   * Gets current butch size
+   * Gets current batch size
    *
    * @return null
    */
-  public static function getCurrentButchSize() {
+  public static function getCurrentBatchSize() {
     if (is_null(self::$currentBatchSize)) {
       self::setBatchSize();
     }
@@ -24,7 +24,7 @@ class CRM_Odoosync_Sync_BatchSize {
 
 
   /**
-   * Decreases number of available lines in current butch
+   * Decreases number of available lines in current batch
    *
    * @param int $usedSize
    */
