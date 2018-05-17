@@ -45,7 +45,7 @@ class CRM_Odoosync_Sync_Contribution_PendingContribution {
       $contributionList = civicrm_api3('Contribution', 'get', [
         'return' => ["id"],
         'is_deleted' => ['IS NOT NULL' => 1],
-        'options' => ['limit' => (int) CRM_Odoosync_Sync_BatchSize::getCurrentButchSize()],
+        'options' => ['limit' => (int) CRM_Odoosync_Sync_BatchSize::getCurrentBatchSize()],
         'custom_' . $this->syncStatusFieldId => $this->syncStatusValue,
       ]);
 

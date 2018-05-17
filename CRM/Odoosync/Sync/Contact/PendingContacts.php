@@ -48,7 +48,7 @@ class CRM_Odoosync_Sync_Contact_PendingContacts {
         'contact_type' => ["Individual", "Organization"],
         'options' => [
           'sort' => "contact_type DESC",
-          'limit' => CRM_Odoosync_Sync_BatchSize::getCurrentButchSize()
+          'limit' => CRM_Odoosync_Sync_BatchSize::getCurrentBatchSize()
         ],
         'custom_' . $this->syncStatusFieldId => $this->syncStatusValue,
       ]);
