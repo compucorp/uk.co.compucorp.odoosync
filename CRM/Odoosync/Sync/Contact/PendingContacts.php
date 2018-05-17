@@ -41,13 +41,15 @@ class CRM_Odoosync_Sync_Contact_PendingContacts {
    * @return array
    */
   public function getPendingContacts() {
-    $syncSetting = CRM_Odoosync_Setting::getInstance()->retrieve();
-
     try {
       $contactList = civicrm_api3('Contact', 'get', [
         'return' => ["id"],
         'is_deleted' => ['IS NOT NULL' => 1],
-        'options' => ['limit' => (int) $syncSetting['odoosync_batch_size']],
+        'contact_type' => ["Individual", "Organization"],
+        'options' => [
+          'sort' => "contact_type DESC",
+          'limit' => CRM_Odoosync_Sync_BatchSize::getCurrentBatchSize()
+        ],
         'custom_' . $this->syncStatusFieldId => $this->syncStatusValue,
       ]);
 
@@ -55,6 +57,8 @@ class CRM_Odoosync_Sync_Contact_PendingContacts {
       foreach ($contactList['values'] as $contact) {
         $contactListId[] = $contact['contact_id'];
       }
+
+      CRM_Odoosync_Sync_BatchSize::setUsedSize(count($contactListId));
 
       return $contactListId;
     }
