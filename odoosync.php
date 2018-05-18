@@ -144,16 +144,16 @@ function odoosync_civicrm_navigationMenu(&$menu) {
  * Implements hook_civicrm_postProcess().
  */
 function odoosync_civicrm_postProcess($formName, &$form) {
-  $syncInformationUpdater = new CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater($formName, $form);
-  $syncInformationUpdater->updateSyncInfo();
+  $contact = new CRM_Odoosync_Hook_PostProcess_Contact($formName, $form);
+  $contact->process();
 }
 
 /**
  * Implements hook_civicrm_pre().
  */
 function odoosync_civicrm_pre($op, $objectName, $id, &$params) {
-  $contributionSyncInformationUpdater = new CRM_Odoosync_Hook_Pre_Contribution($op, $objectName, $id, $params);
-  $contributionSyncInformationUpdater->process();
+  $contribution = new CRM_Odoosync_Hook_Pre_Contribution($op, $objectName, $id, $params);
+  $contribution->process();
 }
 
 /**
