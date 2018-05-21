@@ -177,7 +177,7 @@ function odoosync_civicrm_post($op, $objectName, $objectId, &$objectRef) {
   }
 
   //lineItem
-  if ($objectName = 'LineItem' && isset($objectRef->entity_table)
+  if ($objectName == 'LineItem' && isset($objectRef->entity_table)
     && $objectRef->entity_table == 'civicrm_contribution'
     && ($op == 'create' || $op == 'edit' || $op == 'delete')
   ) {
