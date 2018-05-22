@@ -141,14 +141,6 @@ function odoosync_civicrm_navigationMenu(&$menu) {
 }
 
 /**
- * Implements hook_civicrm_postProcess().
- */
-function odoosync_civicrm_postProcess($formName, &$form) {
-  $syncInformationUpdater = new CRM_Odoosync_Hook_PostProcess_ContactSyncInformationUpdater($formName, $form);
-  $syncInformationUpdater->updateSyncInfo();
-}
-
-/**
  * Implements hook_civicrm_pre().
  */
 function odoosync_civicrm_pre($op, $objectName, $id, &$params) {
@@ -163,26 +155,42 @@ function odoosync_civicrm_post($op, $objectName, $objectId, &$objectRef) {
   //contribution
   if ($objectName == 'Contribution') {
     if ($op == 'create' || $op == 'edit') {
-      $contribution = new CRM_Odoosync_Hook_Post_Contribution($op, $objectName, $objectId, $objectRef);
+      $contribution = new CRM_Odoosync_Hook_Post_Contribution_Contribution($op, $objectName, $objectId, $objectRef);
       $contribution->process();
     }
   }
 
   //entityFinancialTrxn
   if ($objectName == 'EntityFinancialTrxn' && $objectRef->entity_table == "civicrm_financial_item"
-    && ($op == 'create' || $op == 'edit' || $op == 'delete')
-  ) {
-    $entityFinancialTrxn = new CRM_Odoosync_Hook_Post_EntityFinancialTrxn($op, $objectName, $objectId, $objectRef);
+    && ($op == 'create' || $op == 'edit' || $op == 'delete')) {
+    $entityFinancialTrxn = new CRM_Odoosync_Hook_Post_Contribution_EntityFinancialTrxn($op, $objectName, $objectId, $objectRef);
     $entityFinancialTrxn->process();
   }
 
   //lineItem
   if ($objectName == 'LineItem' && isset($objectRef->entity_table)
     && $objectRef->entity_table == 'civicrm_contribution'
-    && ($op == 'create' || $op == 'edit' || $op == 'delete')
-  ) {
-    $lineItem = new CRM_Odoosync_Hook_Post_LineItem($op, $objectName, $objectId, $objectRef);
+    && ($op == 'create' || $op == 'edit' || $op == 'delete')) {
+    $lineItem = new CRM_Odoosync_Hook_Post_Contribution_LineItem($op, $objectName, $objectId, $objectRef);
     $lineItem->process();
+  }
+
+  //Organization, Individual
+  if (($objectName == 'Organization' || $objectName == 'Individual')
+    && ($op == 'create' || $op == 'edit' || $op == 'delete'|| $op == 'trash'|| $op == 'restore')) {
+    $contact = new CRM_Odoosync_Hook_Post_Contact_Contact($op, $objectName, $objectId, $objectRef);
+    $contact->process();
+  }
+
+  //Address, Email, IM, Website, Phone
+  if (($objectName == 'Address'
+    || $objectName == 'Email'
+    || $objectName == 'IM'
+    || $objectName == 'Phone'
+    || $objectName == 'Website')
+    && ($op == 'create' || $op == 'edit' || $op == 'delete')) {
+    $contact = new CRM_Odoosync_Hook_Post_Contact_Entity($op, $objectName, $objectId, $objectRef);
+    $contact->process();
   }
 
 }

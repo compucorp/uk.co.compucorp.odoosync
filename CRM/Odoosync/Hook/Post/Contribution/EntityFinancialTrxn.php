@@ -3,7 +3,7 @@
 /**
  * Handle EntityFinancialTrxn post processes
  */
-class CRM_Odoosync_Hook_Post_EntityFinancialTrxn extends CRM_Odoosync_Hook_Post_Base {
+class CRM_Odoosync_Hook_Post_Contribution_EntityFinancialTrxn extends CRM_Odoosync_Hook_Post_Contribution_Base {
 
   /**
    * Updates contribution sync information
