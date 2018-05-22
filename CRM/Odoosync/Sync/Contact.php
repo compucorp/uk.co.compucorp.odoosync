@@ -115,9 +115,8 @@ class CRM_Odoosync_Sync_Contact extends CRM_Odoosync_Sync_BaseHandler {
     $this->setLog($errorMessage);
 
     if ($isReachedRetryThreshold) {
-      $this->setLog(ts("Reached retry threshold counter. 'Sync Status' marked as 'Sync failed. Sending errors to emails.'"));
-      $errorMail = new CRM_Odoosync_Mail_Error($this->syncContactId, 'Contact', $errorMessage);
-      $errorMail->sendToRecipients();
+      $this->setLog(ts("Reached retry threshold counter. 'Sync Status' marked as 'Sync failed. Prepare sending errors to emails.'"));
+      CRM_Odoosync_Mail_Error::collectMessage('Contact', $this->syncContactId, $errorMessage);
     }
   }
 

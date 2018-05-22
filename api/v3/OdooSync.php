@@ -31,8 +31,8 @@ function _civicrm_api3_odoo_sync_run_spec(&$params) {
  * @return mixed
  */
 function civicrm_api3_odoo_sync_send_error_message($params) {
-  $errorMail = new CRM_Odoosync_Mail_Error($params['entity_id'], $params['entity_type'], $params['error_message']);
-  $log = $errorMail->sendToRecipients();
+  CRM_Odoosync_Mail_Error::collectMessage($params['entity_type'], $params['entity_id'], $params['error_message']);
+  $log = (new CRM_Odoosync_Mail_Error())->sendToRecipients();
 
   return $log;
 }

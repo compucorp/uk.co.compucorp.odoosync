@@ -6,17 +6,17 @@
         <br/>
         <table>
             <tr>
-                <td><p>{ts}Entity type:{/ts}</p></td>
-                <td><p>{$entityType}</p></td>
+                <th>{ts}Entity type{/ts}</th>
+                <th>{ts}Entity id{/ts}</th>
+                <th>{ts}Error log{/ts}</th>
             </tr>
-            <tr>
-                <td><p>{ts}Entity id:{/ts}</p></td>
-                <td><p>{$entityId}</p></td>
-            </tr>
-            <tr>
-                <td><p>{ts}Error log:{/ts}</p></td>
-                <td><p>{$errorMessage}</p></td>
-            </tr>
+            {foreach from=$syncErrorMessageList item='message'}
+                <tr>
+                    <td><p>{$message.entityType}</p></td>
+                    <td><p>{$message.entityId}</p></td>
+                    <td><p>{$message.errorLog}</p></td>
+                </tr>
+            {/foreach}
         </table>
     </body>
 </html>
