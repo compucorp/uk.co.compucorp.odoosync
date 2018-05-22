@@ -173,7 +173,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
       return;
     }
 
-    $connectToContributionId = $this->createEntityFinancialTrxn(
+    $this->createEntityFinancialTrxn(
       $financialTrxnId,
       $this->validatedParams['contribution_id'],
       $this->validatedParams['total_amount'],
