@@ -326,6 +326,20 @@
             <is_active>1</is_active>
             <weight>9</weight>
         </CustomField>
+        <CustomField>
+            <name>do_not_sync</name>
+            <column_name>do_not_sync</column_name>
+            <label>Do not sync</label>
+            <custom_group_name>odoo_invoice_sync_information</custom_group_name>
+            <data_type>Boolean</data_type>
+            <html_type>Radio</html_type>
+            <is_searchable>1</is_searchable>
+            <default_value>0</default_value>
+            <is_view>0</is_view>
+            <is_required>1</is_required>
+            <is_active>1</is_active>
+            <weight>10</weight>
+        </CustomField>
     </CustomFields>
     <CustomGroups>
         <CustomGroup>

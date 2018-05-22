@@ -6,7 +6,7 @@
 class CRM_Odoosync_Sync_Contribution_PendingContribution {
 
   /**
-   * Sync contribution id
+   * Custom field id for 'sync_status'
    *
    * @var int
    */
@@ -18,6 +18,13 @@ class CRM_Odoosync_Sync_Contribution_PendingContribution {
    * @var int
    */
   private $syncStatusValue;
+
+  /**
+   * Custom field id for 'do_not_sync'
+   *
+   * @var int
+   */
+  private $doNotSyncFieldId;
 
   /**
    * CRM_Odoosync_Sync_Contribution_PendingContribution constructor.
@@ -33,6 +40,10 @@ class CRM_Odoosync_Sync_Contribution_PendingContribution {
       'odoo_sync_status',
       'awaiting_sync'
     );
+    $this->doNotSyncFieldId = CRM_Odoosync_Common_CustomField::getCustomFieldId(
+      'odoo_invoice_sync_information',
+      'do_not_sync'
+    );
   }
 
   /**
@@ -47,6 +58,7 @@ class CRM_Odoosync_Sync_Contribution_PendingContribution {
         'is_deleted' => ['IS NOT NULL' => 1],
         'options' => ['limit' => (int) CRM_Odoosync_Sync_BatchSize::getCurrentBatchSize()],
         'custom_' . $this->syncStatusFieldId => $this->syncStatusValue,
+        'custom_' . $this->doNotSyncFieldId =>  ['!=' => 1]
       ]);
 
       $contributionListId = [];
