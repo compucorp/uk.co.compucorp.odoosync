@@ -17,6 +17,7 @@ class CRM_Odoosync_Sync {
     $log = [];
     $logContact = (new CRM_Odoosync_Sync_Contact($params))->run();
     $logContribution = (new CRM_Odoosync_Sync_Contribution($params))->run();
+    $mailLog = (new CRM_Odoosync_Mail_Error())->sendToRecipients();
 
     $log['is_error'] = ($logContact['is_error'] == 1 || $logContact['is_error'] == 1) ? 1 : 0;
 
@@ -24,10 +25,12 @@ class CRM_Odoosync_Sync {
     if ($params['debug'] == 1) {
       $log['debugLog']['contacts_debug_log'] = $logContact['debugLog'];
       $log['debugLog']['contribution_debug_log'] = $logContribution['debugLog'];
+      $log['debugLog']['mail_debug_log'] = $mailLog;
     }
 
     //this log can view on schedule job
     $log['values'] = '<br/>' . $logContact['values'] . $logContribution['values'];
+    $log['values'] .= !empty($mailLog) ? '<br/>' . $mailLog : '';
 
     return $log;
   }

@@ -27,27 +27,6 @@ class CRM_Odoosync_Mail_Error {
   private $recipientsEmails = [];
 
   /**
-   * Error message
-   *
-   * @var string
-   */
-  private $message;
-
-  /**
-   * Entity type
-   *
-   * @var string
-   */
-  private $entityType;
-
-  /**
-   * Entity id
-   *
-   * @var string
-   */
-  private $entityId;
-
-  /**
    * Sender email name
    *
    * @var string
@@ -62,70 +41,23 @@ class CRM_Odoosync_Mail_Error {
   private $senderEmailAddress;
 
   /**
+   * List of messages data
+   *
+   * @var string
+   */
+  private static $syncErrorMessageList = [];
+
+  /**
    * CRM_Odoosync_Mail_Error constructor.
-   *
-   * @param $errorMessage
-   *
-   * @param $entityType
-   *
-   * @param $entityId
    *
    * @throws \CiviCRM_API3_Exception
    * @throws \Exception
    */
-  public function __construct($entityId, $entityType, $errorMessage) {
-    $this->entityId = $entityId;
-    $this->entityType = $entityType;
-    $this->setMessage($errorMessage);
-
+  public function __construct() {
     $this->setRecipientsEmails();
-    $this->setLog(ts("Found %1 recipients' emails.", [ 1 => count($this->recipientsEmails)]));
-
     $senderEmail = CRM_Core_BAO_Domain::getNameAndEmail();
     $this->setSenderEmailName($senderEmail[0]);
     $this->setSenderEmailAddress($senderEmail[1]);
-  }
-
-  /**
-   * Sends sync error message email to the recipient
-   */
-  public function sendToRecipients() {
-    foreach ($this->recipientsEmails as $email) {
-      $this->sendEmail($email);
-    }
-
-    return $this->log;
-  }
-
-  /**
-   * Sends sync error message email to the recipient
-   *
-   * @param $email
-   */
-  private function sendEmail($email) {
-    $logMessages = ts('Sending to the %1 ... ', [ 1 => $email]);
-
-    try {
-      civicrm_api3('MessageTemplate', 'send', [
-        'option_group_name' => 'msg_tpl_workflow_odoo_sync',
-        'option_value_name' => 'civicrm_odoo_sync_error_report',
-        'template_params' => [
-          'errorMessage' => $this->message,
-          'entityType' => $this->entityType,
-          'entityId' => $this->entityId,
-        ],
-        'from' => $this->senderEmailName . " <" . $this->senderEmailAddress . ">",
-        'to_email' => $email,
-      ]);
-
-      $logMessages .= ts('Success. Email was sent.');
-    }
-    catch (CiviCRM_API3_Exception $e) {
-      $logMessages .= ts('Email was not sent. Error:');
-      $logMessages .= ts($e->getMessage());
-    }
-
-    $this->setLog($logMessages);
   }
 
   /**
@@ -141,15 +73,6 @@ class CRM_Odoosync_Mail_Error {
     if (!empty($emailFromSetting['odoosync_error_notice_address'])) {
       $this->recipientsEmails = explode(',', $emailFromSetting['odoosync_error_notice_address']);
     }
-  }
-
-  /**
-   * Sets log message
-   *
-   * @param mixed $log
-   */
-  private function setLog($log) {
-    $this->log[] = $log;
   }
 
   /**
@@ -181,16 +104,72 @@ class CRM_Odoosync_Mail_Error {
   }
 
   /**
-   * Sets error message
-   *
-   * @param string $message
+   * Sends sync error message email to the recipient
    */
-  private function setMessage($message) {
-    if (empty($message)) {
-      $this->message = '';
+  public function sendToRecipients() {
+    if (empty(self::$syncErrorMessageList)) {
+      return $this->log;
     }
 
-    $this->message = $message;
+    $this->setLog(ts("Found %1 recipients' emails.", [ 1 => count($this->recipientsEmails)]));
+    foreach ($this->recipientsEmails as $email) {
+      $this->sendEmail($email);
+    }
+
+    return $this->log;
+  }
+
+  /**
+   * Sets log message
+   *
+   * @param mixed $log
+   */
+  private function setLog($log) {
+    $this->log[] = $log;
+  }
+
+  /**
+   * Sends sync error message email to the recipient
+   *
+   * @param $email
+   */
+  private function sendEmail($email) {
+    $logMessages = ts('Sending to the %1 ... ', [ 1 => $email]);
+    $this->setLog(ts("Message list:"));
+    $this->setLog(self::$syncErrorMessageList);
+
+    try {
+      civicrm_api3('MessageTemplate', 'send', [
+        'option_group_name' => 'msg_tpl_workflow_odoo_sync',
+        'option_value_name' => 'civicrm_odoo_sync_error_report',
+        'template_params' => ['syncErrorMessageList' => self::$syncErrorMessageList],
+        'from' => $this->senderEmailName . " <" . $this->senderEmailAddress . ">",
+        'to_email' => $email,
+      ]);
+
+      $logMessages .= ts('Success. Email was sent.');
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      $logMessages .= ts('Email was not sent. Error:');
+      $logMessages .= ts($e->getMessage());
+    }
+
+    $this->setLog($logMessages);
+  }
+
+  /**
+   * Collects messages
+   *
+   * @param $entityType
+   * @param $entityId
+   * @param $errorLog
+   */
+  public static function collectMessage($entityType, $entityId, $errorLog) {
+    self::$syncErrorMessageList[] = [
+      'entityType' => $entityType,
+      'entityId' => $entityId,
+      'errorLog' => $errorLog
+    ];
   }
 
 }
