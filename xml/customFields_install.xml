@@ -336,7 +336,7 @@
             <is_searchable>1</is_searchable>
             <default_value>0</default_value>
             <is_view>0</is_view>
-            <is_required>0</is_required>
+            <is_required>1</is_required>
             <is_active>1</is_active>
             <weight>10</weight>
         </CustomField>

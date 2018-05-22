@@ -52,26 +52,27 @@ class CRM_Odoosync_Sync_Contribution_PendingContribution {
    * @return array
    */
   public function getIds() {
-    $query = "
-      SELECT 
-        contribution.id AS id 
-      FROM civicrm_contribution AS contribution
-      LEFT JOIN odoo_invoice_sync_information AS info 
-        ON contribution.id = info.entity_id
-      WHERE (info.do_not_sync IS NULL OR info.do_not_sync != 1)
-      LIMIT %1
-    ";
+    try {
+      $contributionList = civicrm_api3('Contribution', 'get', [
+        'return' => ["id"],
+        'is_deleted' => ['IS NOT NULL' => 1],
+        'options' => ['limit' => (int) CRM_Odoosync_Sync_BatchSize::getCurrentBatchSize()],
+        'custom_' . $this->syncStatusFieldId => $this->syncStatusValue,
+        'custom_' . $this->doNotSyncFieldId =>  ['!=' => 1]
+      ]);
 
-    $dao = CRM_Core_DAO::executeQuery($query, [
-      1 => [(int) CRM_Odoosync_Sync_BatchSize::getCurrentBatchSize(), 'Integer']
-    ]);
+      $contributionListId = [];
+      foreach ($contributionList['values'] as $contribution) {
+        $contributionListId[] = $contribution['contribution_id'];
+      }
 
-    $contributionListId = [];
-    while ($dao->fetch()) {
-      $contributionListId[] = $dao->id;
+      CRM_Odoosync_Sync_BatchSize::setUsedSize(count($contributionListId));
+
+      return $contributionListId;
     }
-
-    return $contributionListId;
+    catch (CiviCRM_API3_Exception $e) {
+      return [];
+    }
   }
 
 }
