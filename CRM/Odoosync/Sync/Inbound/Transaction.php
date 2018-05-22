@@ -16,8 +16,14 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
   ];
 
   /**
-   * Starts transaction sync from Odoo
+   * Validated params
    *
+   * @var array
+   */
+  private $validatedParams = [];
+
+  /**
+   * Starts transaction sync from Odoo
    */
   public function run() {
     $inboundData = trim(file_get_contents('php://input'));
@@ -31,14 +37,14 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
     }
 
     $params = $this->parseInbound($inboundXmlObject);
-    $validatedParams = $this->validateParams($params);
+    $this->validateParams($params);
 
-    if (!$validatedParams) {
+    if (empty($this->validatedParams)) {
       $this->returnResponse();
       return;
     }
 
-    $this->syncTransactions($validatedParams);
+    $this->syncTransactions();
     $this->returnResponse();
   }
 
@@ -72,8 +78,6 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
    * Validates transaction params
    *
    * @param array $params
-   *
-   * @return array|bool
    */
   private function validateParams($params) {
     $fields = ["total_amount", "trxn_date", "invoice_id", "currency", "to_financial_account_name"];
@@ -86,7 +90,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
       else {
         $this->syncResponse['is_error'] = 1;
         $this->syncResponse['error_message'] = ts("%1 is required field", [1 => $fieldName]);
-        return FALSE;
+        return;
       }
     }
 
@@ -97,16 +101,16 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
     if (!$this->isContributionExist($contributionId)) {
       $this->syncResponse['is_error'] = 1;
       $this->syncResponse['error_message'] = ts("Contribution(id = %1) doesn't exist.", [1 => $contributionId]);
-      return FALSE;
+      return;
     }
 
     if (!$toFinancialAccountId) {
       $this->syncResponse['is_error'] = 1;
       $this->syncResponse['error_message'] = ts("Financial account('%1') doesn't exist.", [1 => $toFinancialAccountName]);
-      return FALSE;
+      return;
     }
 
-    return [
+    $this->validatedParams =  [
       'to_financial_account_id' => $toFinancialAccountId,
       'total_amount' => $validParam['total_amount'],
       'trxn_date' => CRM_Odoosync_Common_Date::convertTimestampToDate($validParam['trxn_date']),
@@ -161,20 +165,19 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
 
   /**
    * Creates transaction
-   *
-   * @param array $params
    */
-  private function syncTransactions($params) {
-    $financialTrxnId = $this->createFinancialTrxn($params);
+  private function syncTransactions() {
+    $financialTrxnId = $this->createFinancialTrxn();
 
     if (!$financialTrxnId ) {
       return;
     }
 
-    $connectTransaction = $this->createEntityFinancialTrxn(
+    $connectToContributionId = $this->createEntityFinancialTrxn(
       $financialTrxnId,
-      $params['contribution_id'],
-      $params['total_amount']
+      $this->validatedParams['contribution_id'],
+      $this->validatedParams['total_amount'],
+      "civicrm_contribution"
     );
 
     $this->syncResponse['transaction_id'] = $financialTrxnId;
@@ -184,12 +187,11 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
   /**
    * Creates financial transaction
    *
-   * @param $params
-   *
    * @return bool|int
    */
-  private function createFinancialTrxn($params) {
+  private function createFinancialTrxn() {
     try {
+      $params = array_merge($this->validatedParams, ['is_payment' => 1]);
       $financialTrxn = civicrm_api3('FinancialTrxn', 'create', $params);
       return (int) $financialTrxn["id"];
     }
@@ -209,15 +211,15 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
    *
    * @return bool
    */
-  private function createEntityFinancialTrxn($financialTrxnId, $contributionId, $amount) {
+  private function createEntityFinancialTrxn($financialTrxnId, $contributionId, $amount, $entityTable) {
     try {
       $entityFinancialTrxn = civicrm_api3('EntityFinancialTrxn', 'create', [
-        'entity_table' => "civicrm_contribution",
+        'entity_table' => $entityTable,
         'entity_id' => (int)$contributionId,
         'financial_trxn_id' => (int)$financialTrxnId,
-        'amount' => (int) $amount
+        'amount' => $amount
       ]);
-      return true;
+      return (int) $entityFinancialTrxn['id'];
     }
     catch (CiviCRM_API3_Exception $e) {
       $this->syncResponse['is_error'] = 1;
