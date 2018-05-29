@@ -3,7 +3,7 @@
 /**
  * Handle Contribution post processes
  */
-class CRM_Odoosync_Hook_Post_Contribution extends CRM_Odoosync_Hook_Post_Base {
+class CRM_Odoosync_Hook_Post_Contribution_Contribution extends CRM_Odoosync_Hook_Post_Contribution_Base {
 
   /**
    * Updates contribution sync information

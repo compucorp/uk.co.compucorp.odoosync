@@ -3,7 +3,7 @@
 /**
  * Handle LineItem post processes
  */
-class CRM_Odoosync_Hook_Post_LineItem extends CRM_Odoosync_Hook_Post_Base {
+class CRM_Odoosync_Hook_Post_Contribution_LineItem extends CRM_Odoosync_Hook_Post_Contribution_Base {
 
   /**
    * Updates contribution sync information
