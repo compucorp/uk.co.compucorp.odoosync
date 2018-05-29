@@ -176,20 +176,22 @@ function odoosync_civicrm_post($op, $objectName, $objectId, &$objectRef) {
   }
 
   //Organization, Individual
-  if (($objectName == 'Organization' || $objectName == 'Individual')
-    && ($op == 'create' || $op == 'edit' || $op == 'delete'|| $op == 'trash'|| $op == 'restore')) {
+  $isContactOperation = ($objectName == 'Organization' || $objectName == 'Individual')
+    && ($op == 'create' || $op == 'edit' || $op == 'delete'|| $op == 'trash'|| $op == 'restore');
+  if ($isContactOperation) {
     $contact = new CRM_Odoosync_Hook_Post_Contact_Contact($op, $objectName, $objectId, $objectRef);
     $contact->process();
   }
 
   //Address, Email, IM, Website, Phone
-  if (($objectName == 'Address'
-    || $objectName == 'Email'
-    || $objectName == 'IM'
-    || $objectName == 'Phone'
-    || $objectName == 'Website')
-    && ($op == 'create' || $op == 'edit' || $op == 'delete')) {
-    $contact = new CRM_Odoosync_Hook_Post_Contact_Entity($op, $objectName, $objectId, $objectRef);
+  $isContactSubEntityOperation = ($objectName == 'Address'
+      || $objectName == 'Email'
+      || $objectName == 'IM'
+      || $objectName == 'Phone'
+      || $objectName == 'Website')
+    && ($op == 'create' || $op == 'edit' || $op == 'delete');
+  if ($isContactSubEntityOperation) {
+    $contact = new CRM_Odoosync_Hook_Post_Contact_SubEntity($op, $objectName, $objectId, $objectRef);
     $contact->process();
   }
 

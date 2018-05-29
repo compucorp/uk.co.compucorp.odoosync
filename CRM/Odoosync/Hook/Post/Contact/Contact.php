@@ -1,13 +1,13 @@
 <?php
 
-class CRM_Odoosync_Hook_Post_Contact_Contact extends CRM_Odoosync_Hook_Post_Contact_Base {
+class CRM_Odoosync_Hook_Post_Contact_Contact extends CRM_Odoosync_Hook_Post_Base {
 
   /**
    * Updates contact sync information
    *
    * @throws \CiviCRM_API3_Exception
    */
-  public function update() {
+  public function process() {
     $actionToSync = ($this->operation == 'create') ? 'create' : 'update';
     $syncInformation = new CRM_Odoosync_Contact_SyncInformationUpdater(
       $this->objectRef->id,
