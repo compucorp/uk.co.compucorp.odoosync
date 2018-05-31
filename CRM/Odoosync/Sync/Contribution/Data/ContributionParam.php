@@ -49,7 +49,7 @@ class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync
         'value' => $contactId
       ],
       [
-        'name' => 'receive_date',
+        'name' => 'date_invoice',
         'type' => 'int',
         'value' => $receiveDateTimestamp
       ],
