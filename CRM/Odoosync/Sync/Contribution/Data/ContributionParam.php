@@ -18,7 +18,7 @@ class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync
       $actionToSyncValueId
     );
     $contactId = $contributionData->contact_id;
-    $name = is_null($contributionData->purchase_order_number) ? $this->contributionId : $contributionData->purchase_order_number;
+    $name = empty($contributionData->purchase_order_number) ? "CIVI " . $this->contributionId : $contributionData->purchase_order_number;
     $accountCode = $contributionData->account_code;
     $currencyCode = $contributionData->currency;
 
