@@ -13,6 +13,7 @@ class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync
     $actionToSyncValueId = $contributionData->action_to_sync;
     $actionDateTimestamp = $this->getActionDateTimestamp($contributionData->action_date);
     $receiveDateTimestamp = $this->getActionDateTimestamp($contributionData->receive_date);
+    $receiveDateTimestampWithTimezone = $receiveDateTimestamp + (new DateTime())->getOffset();
     $actionToSyncName = CRM_Odoosync_Common_OptionValue::getOptionName(
       'odoo_invoice_action_to_sync',
       $actionToSyncValueId
@@ -51,7 +52,7 @@ class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync
       [
         'name' => 'date_invoice',
         'type' => 'int',
-        'value' => $receiveDateTimestamp
+        'value' => $receiveDateTimestampWithTimezone
       ],
       [
         'name' => 'action_to_sync',
