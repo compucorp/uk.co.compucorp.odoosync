@@ -11,8 +11,8 @@ class CRM_Odoosync_Hook_Post_Contribution_EntityFinancialTrxn extends CRM_Odoosy
    * @throws \CiviCRM_API3_Exception
    */
   public function process() {
-    $civicrmFinancialItemId = $this->objectRef->entity_id;
-    $contributionId = $this->getContributionId($civicrmFinancialItemId);
+    $financialTrxnId = $this->objectRef->financial_trxn_id;
+    $contributionId = $this->getContributionId($financialTrxnId);
 
     if (!$this->isSyncStatusSynced($contributionId)) {
       return;
@@ -31,25 +31,30 @@ class CRM_Odoosync_Hook_Post_Contribution_EntityFinancialTrxn extends CRM_Odoosy
   }
 
   /**
-   * Gets contribution id by financial item id
+   * Gets contribution id by 'financial trxn id'
    *
-   * @param $civicrmFinancialItemId
+   * @param $financialTrxnId
    *
    * @return int|null
    */
-  private function getContributionId($civicrmFinancialItemId) {
-    try {
-      $contributionId = civicrm_api3('FinancialItem', 'getsingle', [
-        'return' => ["entity_id"],
-        'id' => $civicrmFinancialItemId,
-        'options' => ['limit' => 1],
-      ]);
+  private function getContributionId($financialTrxnId) {
+    $query = "
+      SELECT entity_financial_trxn.entity_id AS contribution_id
+      FROM civicrm_entity_financial_trxn AS entity_financial_trxn 
+      WHERE entity_financial_trxn.financial_trxn_id = %1 
+        AND entity_financial_trxn.entity_table = 'civicrm_contribution'
+      LIMIT 1 
+      ";
 
-      return (int) $contributionId['entity_id'];
+    $dao = CRM_Core_DAO::executeQuery($query, [
+      1 => [$financialTrxnId, 'Integer']
+    ]);
+
+    while ($dao->fetch()) {
+      return $dao->contribution_id;
     }
-    catch (CiviCRM_API3_Exception $e) {
-      return NULL;
-    }
+
+    return FALSE;
   }
 
 }
