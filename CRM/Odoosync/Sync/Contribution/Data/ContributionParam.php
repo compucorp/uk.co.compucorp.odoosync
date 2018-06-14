@@ -11,12 +11,10 @@ class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync
   public function retrieve() {
     $contributionData = $this->getContributionData();
     $actionToSyncValueId = $contributionData->action_to_sync;
-    $actionDateTimestamp = $this->getActionDateTimestamp($contributionData->action_date);
-    $receiveDateTimestamp = $this->getActionDateTimestamp($contributionData->receive_date);
-    $actionToSyncName = CRM_Odoosync_Common_OptionValue::getOptionName(
-      'odoo_invoice_action_to_sync',
-      $actionToSyncValueId
-    );
+    $receiveDateTimestamp = CRM_Odoosync_Common_Date::convertDateToTimestamp($contributionData->receive_date);
+    $receiveDateTimestampWithTimezone = $receiveDateTimestamp + (new DateTime())->getOffset();
+    $actionDateTimestamp = CRM_Odoosync_Common_Date::convertDateToTimestamp($contributionData->action_date);
+    $actionToSyncName = CRM_Odoosync_Common_OptionValue::getOptionName('odoo_invoice_action_to_sync', $actionToSyncValueId);
     $contactId = $contributionData->contact_id;
     $name = empty($contributionData->purchase_order_number) ? "CIVI " . $this->contributionId : $contributionData->purchase_order_number;
     $accountCode = $contributionData->account_code;
@@ -51,7 +49,7 @@ class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync
       [
         'name' => 'date_invoice',
         'type' => 'int',
-        'value' => $receiveDateTimestamp
+        'value' => $receiveDateTimestampWithTimezone
       ],
       [
         'name' => 'action_to_sync',
@@ -66,21 +64,6 @@ class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync
     ];
 
     return $contributionParams;
-  }
-
-  /**
-   * Gets timestamp 'action date'
-   *
-   * @param $actionDate
-   *
-   * @return int
-   */
-  private function getActionDateTimestamp($actionDate) {
-    if (!empty($actionDate)) {
-      return CRM_Odoosync_Common_Date::convertDateToTimestamp($actionDate);
-    }
-
-    return 0;
   }
 
   /**
