@@ -35,26 +35,20 @@ class CRM_Odoosync_Hook_Post_Contribution_EntityFinancialTrxn extends CRM_Odoosy
    *
    * @param $financialTrxnId
    *
-   * @return int|null
+   * @return int|false
    */
   private function getContributionId($financialTrxnId) {
-    $query = "
-      SELECT entity_financial_trxn.entity_id AS contribution_id
-      FROM civicrm_entity_financial_trxn AS entity_financial_trxn 
-      WHERE entity_financial_trxn.financial_trxn_id = %1 
-        AND entity_financial_trxn.entity_table = 'civicrm_contribution'
-      LIMIT 1 
-      ";
+    try {
+      $contributionId = civicrm_api3('EntityFinancialTrxn', 'getvalue', [
+        'return' => "entity_id",
+        'entity_table' => "civicrm_contribution",
+        'financial_trxn_id' => $financialTrxnId
+      ]);
 
-    $dao = CRM_Core_DAO::executeQuery($query, [
-      1 => [$financialTrxnId, 'Integer']
-    ]);
-
-    while ($dao->fetch()) {
-      return $dao->contribution_id;
+      return (int) $contributionId;
+    } catch (CiviCRM_API3_Exception $e) {
+      return FALSE;
     }
-
-    return FALSE;
   }
 
 }
