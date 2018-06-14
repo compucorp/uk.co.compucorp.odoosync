@@ -6,7 +6,6 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
    * Returns payment data
    *
    * @return mixed
-   * @throws \CiviCRM_API3_Exception
    */
   public function retrieve() {
     $paymentItemsDao = $this->generatePaymentItemsData();
@@ -19,12 +18,8 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
    * Gets payment data
    *
    * @return \CRM_Core_DAO|object
-   * @throws \CiviCRM_API3_Exception
    */
   private function generatePaymentItemsData() {
-    $refundedStatusValueId = CRM_Odoosync_Sync_Contribution_Data_Status::getRefundedValueId();
-    $cancelledStatusValueId = CRM_Odoosync_Sync_Contribution_Data_Status::getCancelledValueId();
-
     $query = "
       SELECT 
         financial_trxn.id AS communication,
@@ -42,13 +37,11 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
       WHERE entity_financial_trxn.entity_table = 'civicrm_contribution'
         AND entity_financial_trxn.entity_id = %1
         AND financial_trxn.is_payment = 1
+        AND from_financial_account_id IS NOT NULL
     ";
 
     $dao = CRM_Core_DAO::executeQuery($query, [
-      1 => [$this->contributionId, 'Integer'],
-      2 => [$refundedStatusValueId, 'String'],
-      3 => [$cancelledStatusValueId, 'String'],
-      4 => [CRM_Odoosync_Sync_Contribution_Data_AccountRelationShip::getSalesTaxAccountId(), 'Integer']
+      1 => [$this->contributionId, 'Integer']
     ]);
 
     return $dao;
