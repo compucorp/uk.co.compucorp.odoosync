@@ -11,8 +11,8 @@ class CRM_Odoosync_Hook_Post_Contribution_EntityFinancialTrxn extends CRM_Odoosy
    * @throws \CiviCRM_API3_Exception
    */
   public function process() {
-    $civicrmFinancialItemId = $this->objectRef->entity_id;
-    $contributionId = $this->getContributionId($civicrmFinancialItemId);
+    $financialTrxnId = $this->objectRef->financial_trxn_id;
+    $contributionId = $this->getContributionId($financialTrxnId);
 
     if (!$this->isSyncStatusSynced($contributionId)) {
       return;
@@ -31,24 +31,23 @@ class CRM_Odoosync_Hook_Post_Contribution_EntityFinancialTrxn extends CRM_Odoosy
   }
 
   /**
-   * Gets contribution id by financial item id
+   * Gets contribution id by 'financial trxn id'
    *
-   * @param $civicrmFinancialItemId
+   * @param $financialTrxnId
    *
-   * @return int|null
+   * @return int|false
    */
-  private function getContributionId($civicrmFinancialItemId) {
+  private function getContributionId($financialTrxnId) {
     try {
-      $contributionId = civicrm_api3('FinancialItem', 'getsingle', [
-        'return' => ["entity_id"],
-        'id' => $civicrmFinancialItemId,
-        'options' => ['limit' => 1],
+      $contributionId = civicrm_api3('EntityFinancialTrxn', 'getvalue', [
+        'return' => "entity_id",
+        'entity_table' => "civicrm_contribution",
+        'financial_trxn_id' => $financialTrxnId
       ]);
 
-      return (int) $contributionId['entity_id'];
-    }
-    catch (CiviCRM_API3_Exception $e) {
-      return NULL;
+      return (int) $contributionId;
+    } catch (CiviCRM_API3_Exception $e) {
+      return FALSE;
     }
   }
 
