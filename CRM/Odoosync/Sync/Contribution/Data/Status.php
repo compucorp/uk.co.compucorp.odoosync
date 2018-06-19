@@ -17,6 +17,13 @@ class CRM_Odoosync_Sync_Contribution_Data_Status {
   private static $cancelledValueId = NULL;
 
   /**
+   * Contribution completed status 'value ID'
+   *
+   * @return NULL|string
+   */
+  private static $completedValueId = NULL;
+
+  /**
    * Gets contribution refunded status 'value ID'
    *
    * @return string
@@ -40,6 +47,19 @@ class CRM_Odoosync_Sync_Contribution_Data_Status {
     }
 
     return self::$cancelledValueId;
+  }
+
+  /**
+   * Gets contribution completed status 'value ID'
+   *
+   * @return string
+   */
+  public static function getCompletedValueId() {
+    if (is_null(self::$completedValueId)) {
+      self::$completedValueId = CRM_Odoosync_Common_OptionValue::getOptionValueID('contribution_status', 'Completed');
+    }
+
+    return self::$completedValueId;
   }
 
 }
