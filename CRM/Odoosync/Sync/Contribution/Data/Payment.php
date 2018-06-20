@@ -20,6 +20,10 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
    * @return \CRM_Core_DAO|object
    */
   private function generatePaymentItemsData() {
+    $completed = CRM_Odoosync_Sync_Contribution_Data_Status::getCompletedValueId();
+    $cancelled = CRM_Odoosync_Sync_Contribution_Data_Status::getCancelledValueId();
+    $refunded = CRM_Odoosync_Sync_Contribution_Data_Status::getRefundedValueId();
+
     $query = "
       SELECT 
         financial_trxn.id AS communication,
@@ -37,11 +41,14 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
       WHERE entity_financial_trxn.entity_table = 'civicrm_contribution'
         AND entity_financial_trxn.entity_id = %1
         AND financial_trxn.is_payment = 1
-        AND from_financial_account_id IS NOT NULL
+        AND financial_trxn.status_id IN(%2, %3, %4)
     ";
 
     $dao = CRM_Core_DAO::executeQuery($query, [
-      1 => [$this->contributionId, 'Integer']
+      1 => [$this->contributionId, 'Integer'],
+      2 => [$completed, 'String'],
+      3 => [$cancelled, 'String'],
+      4 => [$refunded, 'String']
     ]);
 
     return $dao;
