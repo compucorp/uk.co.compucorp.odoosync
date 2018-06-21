@@ -19,12 +19,18 @@ class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync
     $name = empty($contributionData->purchase_order_number) ? "CIVI " . $this->contributionId : $contributionData->purchase_order_number;
     $accountCode = $contributionData->account_code;
     $currencyCode = $contributionData->currency;
+    $invoiceJournalName = $this->getFinancialTypeNameFromId($contributionData->financial_type_id);
 
     $contributionParams = [
       [
         'name' => 'name',
         'type' => 'string',
         'value' => $name
+      ],
+      [
+        'name' => 'invoice_journal_name',
+        'type' => 'string',
+        'value' => $invoiceJournalName
       ],
       [
         'name' => 'currency_code',
@@ -80,6 +86,7 @@ class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync
         sync_info.action_to_sync AS action_to_sync, 
         sync_info.action_date AS action_date,
         contribution.receive_date AS receive_date,
+        contribution.financial_type_id AS financial_type_id,
         (
           SELECT financial_account.accounting_code 
           FROM civicrm_entity_financial_account AS entity_financial_account
@@ -108,6 +115,20 @@ class CRM_Odoosync_Sync_Contribution_Data_ContributionParam extends CRM_Odoosync
     }
 
     return NULL;
+  }
+
+  /**
+   * Gets the financial type name gives its Id
+   *
+   * @param int $financialTypeId
+   *
+   * @return string
+   */
+  private function getFinancialTypeNameFromId($financialTypeId) {
+    return civicrm_api3('FinancialType', 'getvalue', [
+      'return' => 'name',
+      'id' => $financialTypeId,
+    ]);
   }
 
 }
