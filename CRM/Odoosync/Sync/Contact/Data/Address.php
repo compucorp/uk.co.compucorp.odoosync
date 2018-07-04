@@ -13,7 +13,7 @@ class CRM_Odoosync_Sync_Contact_Data_Address extends CRM_Odoosync_Sync_Contact_D
       'supplementalAddress' => ''
     ];
 
-    $addressValues = $this->getAddressDataByLocationType('Billing');
+    $addressValues = $this->getBillingAddress();
 
     if (empty($addressValues)) {
       $addressValues = $this->getPrimaryAddressData();
@@ -29,6 +29,31 @@ class CRM_Odoosync_Sync_Contact_Data_Address extends CRM_Odoosync_Sync_Contact_D
     }
 
     return $fieldsToSync;
+  }
+
+  /**
+   * Returns the billing address of the contact.
+   * The billing address is the address with
+   * is_billing field = true. if no address met this
+   * criteria  the the billing address will be the one
+   * with location type = 'billing'
+   *
+   * @return array
+   *   empty array will return if there is no billing address
+   */
+  private function getBillingAddress() {
+    $billingAddress = civicrm_api3('Address', 'get', [
+      'sequential' => 1,
+      'options' => ['limit' => 1],
+      'contact_id' => $this->contactId,
+      'is_billing' => 1,
+    ]);
+
+    if (!empty($billingAddress['values'])) {
+      return $billingAddress['values'][0];
+    }
+
+    return $this->getAddressDataByLocationType('Billing');
   }
 
   /**
