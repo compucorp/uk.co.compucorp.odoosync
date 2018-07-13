@@ -177,7 +177,7 @@ function odoosync_civicrm_post($op, $objectName, $objectId, &$objectRef) {
 
   //Organization, Individual
   $isContactOperation = ($objectName == 'Organization' || $objectName == 'Individual')
-    && ($op == 'create' || $op == 'edit' || $op == 'delete'|| $op == 'trash'|| $op == 'restore');
+    && ($op == 'create' || $op == 'edit' || $op == 'update' ||  $op == 'delete'|| $op == 'trash'|| $op == 'restore');
   if ($isContactOperation) {
     $contact = new CRM_Odoosync_Hook_Post_Contact_Contact($op, $objectName, $objectId, $objectRef);
     $contact->process();
