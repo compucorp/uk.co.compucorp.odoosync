@@ -136,8 +136,8 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
     }
 
     $this->validatedParams =  [
-      'to_financial_account_id' => $fromFinancialAccountId,
-      'from_financial_account_id' => $toFinancialAccountId,
+      'to_financial_account_id' => $toFinancialAccountId,
+      'from_financial_account_id' => $fromFinancialAccountId,
       'total_amount' => $validParam['total_amount'],
       'trxn_date' => CRM_Odoosync_Common_Date::convertTimestampToDate($validParam['trxn_date']),
       'currency' => $validParam['currency'],
