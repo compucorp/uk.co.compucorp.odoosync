@@ -143,7 +143,6 @@ class CRM_Odoosync_Sync_Contact_InformationGenerator {
 
   /**
    * Fixes contact prefix name
-   * In Odoo prefixes "Ms." not exist, but has equal "Miss"
    *
    * @param string $prefixName
    *
@@ -152,10 +151,6 @@ class CRM_Odoosync_Sync_Contact_InformationGenerator {
   private function fixPrefixName($prefixName) {
     if (empty($prefixName)) {
       return '';
-    }
-
-    if ($prefixName == "Ms.") {
-      $prefixName = "Miss";
     }
 
     return $prefixName;
