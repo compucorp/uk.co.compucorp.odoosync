@@ -53,7 +53,7 @@ return [
     'group' => 'odoosync',
     'name' => 'odoosync_password',
     'title' => 'Password',
-    'html_type' => 'text',
+    'html_type' => 'password',
     'quick_form_type' => 'Element',
     'default' => '',
     'is_required' => TRUE,
