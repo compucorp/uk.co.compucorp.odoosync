@@ -203,13 +203,19 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
     $defaultAction = $this->getDefaultOptionValue('odoo_partner_action_to_sync');
     $defaultStatus = $this->getDefaultOptionValue('odoo_sync_status');
 
-    $query = "
-      INSERT INTO odoo_partner_sync_information(entity_id, action_to_sync, sync_status)
-      SELECT id, %1 , %2 FROM civicrm_contact
-      WHERE id NOT IN (SELECT entity_id FROM odoo_partner_sync_information);
+    $tempDataTableQuery = "
+      CREATE TEMPORARY TABLE temp_odoo_partner_sync_data 
+      SELECT id FROM civicrm_contact WHERE id NOT IN (SELECT entity_id FROM odoo_partner_sync_information);
       ";
 
-    CRM_Core_DAO::executeQuery($query, [
+    CRM_Core_DAO::executeQuery($tempDataTableQuery);
+
+    $dataInsertionQuery = "
+      INSERT INTO odoo_partner_sync_information(entity_id, action_to_sync, sync_status) 
+      SELECT id, %1, %2 FROM temp_odoo_partner_sync_data;
+      ";
+
+    CRM_Core_DAO::executeQuery($dataInsertionQuery, [
       1 => [$defaultAction, 'Integer'],
       2 => [$defaultStatus, 'Integer'],
     ]);
