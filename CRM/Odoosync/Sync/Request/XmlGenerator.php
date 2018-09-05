@@ -135,11 +135,11 @@ class CRM_Odoosync_Sync_Request_XmlGenerator {
       foreach ($value as $singleValue) {
         $dataElement = $arrayElement->addChild('data');
         $valueElement = $dataElement->addChild('value');
-        $valueElement->addChild($type, $singleValue);
+        $valueElement->addChild($type, htmlspecialchars($singleValue));
       }
     }
     else {
-      $mainValueElement->addChild($type, $value);
+      $mainValueElement->addChild($type, htmlspecialchars($value));
     }
   }
 
