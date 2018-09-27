@@ -50,7 +50,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
       'api_action' => 'run',
       'run_frequency' => 'Hourly',
       'domain_id' => $domainID,
-      'is_active' => '1',
+      'is_active' => 0,
       'parameters' => ''
     ];
 
