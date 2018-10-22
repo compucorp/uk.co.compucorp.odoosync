@@ -365,4 +365,34 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
     }
   }
 
+  public function upgrade_1000() {
+    $this->changeErrorLogCustomFieldsToMemoType();
+    return TRUE;
+  }
+
+  private function changeErrorLogCustomFieldsToMemoType() {
+    $tableNames = ['odoo_invoice_sync_information', 'odoo_partner_sync_information'];
+    $customFields = civicrm_api3('CustomField', 'get', [
+      'sequential' => 1,
+      'custom_group_id' => ['IN' => $tableNames],
+      'name' => 'error_log',
+    ]);
+
+    if ($customFields['count'] == 0) {
+      return;
+    }
+    $customFields = $customFields['values'];
+
+    foreach ($tableNames as $tableName) {
+      CRM_Core_DAO::executeQuery('ALTER TABLE ' . $tableName . ' DROP INDEX INDEX_error_log');
+    }
+
+    foreach ($customFields as $customField) {
+      civicrm_api3('CustomField', 'create', [
+        'id' => $customField['id'],
+        'data_type' => 'Memo',
+        'html_type' => 'TextArea',
+      ]);
+    }
+  }
 }
