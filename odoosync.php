@@ -168,11 +168,13 @@ function odoosync_civicrm_post($op, $objectName, $objectId, &$objectRef) {
   }
 
   //lineItem
-  if ($objectName == 'LineItem' && isset($objectRef->entity_table)
-    && $objectRef->entity_table == 'civicrm_contribution'
+  if ($objectName == 'LineItem'
     && ($op == 'create' || $op == 'edit' || $op == 'delete')) {
-    $lineItem = new CRM_Odoosync_Hook_Post_Contribution_LineItem($op, $objectName, $objectId, $objectRef);
-    $lineItem->process();
+    $objectRef->find(TRUE);
+    if(!empty($objectRef->contribution_id)) {
+      $lineItem = new CRM_Odoosync_Hook_Post_Contribution_LineItem($op, $objectName, $objectId, $objectRef);
+      $lineItem->process();
+    }
   }
 
   //Organization, Individual
