@@ -34,6 +34,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
     }
 
     $params = $this->parseInbound($inboundXmlObject);
+
     $this->validateParams($params);
 
     if ($this->syncResponse['is_error'] === 1) {
@@ -58,7 +59,21 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
     if (isset($response->params->param->value->struct->financial_trxn)) {
       foreach ($response->params->param->value->struct->financial_trxn as $param) {
         if (!empty($param->name) && !empty($param->value)) {
-          $parsedData[(string) $param->name] = (string) $param->value;
+          if (isset($param->value->list->record)) {
+            $parsedRecords = [];
+            // parse list value
+            foreach ($param->value->list->record as $record) {
+              $parsedRecord = [];
+              foreach ($record->param as $listParam) {
+                $parsedRecord[(string) $listParam->name] = (string) $listParam->value;
+              }
+              $parsedRecords[] = $parsedRecord;
+            }
+            $parsedData[(string) $param->name] = $parsedRecords;
+          } else {
+            // parse single value
+            $parsedData[(string) $param->name] = (string) $param->value;
+          }
         }
       }
     }
@@ -145,8 +160,8 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
       $this->syncResponse['error_message'] .= ts("Contribution status '%1' doesn't exist.", [1 => $validParam['contribution_status']]);
     }
 
-    foreach ($validParam['transactions'] as $transaction) {
-      $fromFinancialAccountId = $this->getFinancialAccountIdByCode($transaction['credit_account_code']);
+    foreach ($validParam['transactions'] as $trans) {
+      $fromFinancialAccountId = $this->getFinancialAccountIdByCode($trans['credit_account_code']);
 
       if (!$fromFinancialAccountId) {
         $this->syncResponse['is_error'] = 1;
@@ -155,7 +170,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
 
       $this->validatedTransactionParamsList[] = [
         'from_financial_account_id' => $fromFinancialAccountId,
-        'total_amount' => $transaction['total_amount'],
+        'total_amount' => $trans['total_amount'],
       ];
     }
 
@@ -275,7 +290,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
 
       $this->createEntityFinancialTrxn($financialTrxnId, $transactionParams['total_amount']);
 
-      $this->syncResponse[] = [
+      $this->syncResponse['transactions'][] = [
         'transaction_id' => $financialTrxnId,
         'timestamp' =>  time(),
       ];
@@ -401,6 +416,9 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
     foreach ($this->syncResponse as $name => $value) {
       $result->addChild($name, $value);
     }
+
+    $dump = print_r($xml->asXML(), true);
+    Civi::log()->debug($dump);
 
     echo $xml->asXML();
     CRM_Utils_System::civiExit();
