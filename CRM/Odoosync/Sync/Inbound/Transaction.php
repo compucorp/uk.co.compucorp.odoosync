@@ -291,7 +291,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
       $this->createEntityFinancialTrxn($financialTrxnId, $transactionParams['total_amount']);
 
       $this->syncResponse['transactions'][] = [
-        'transaction_id' => $financialTrxnId,
+        'id' => $financialTrxnId,
         'timestamp' =>  time(),
       ];
     }
@@ -413,8 +413,24 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
     $xml = new SimpleXMLElement('<ResultSet/>');
     $result = $xml->addChild('Result');
 
+    $dump = print_r($this->syncResponse, true);
+    Civi::log()->debug($dump);
     foreach ($this->syncResponse as $name => $value) {
-      $result->addChild($name, $value);
+      if(is_array($value)) {
+        $arrayParent = $result->addChild($name);
+        foreach ($value as $arrayChildValue) {
+          if(is_array($arrayChildValue)) {
+            $recordElement = $arrayParent->addChild('record');
+            foreach ($arrayChildValue as $arrayChildValueName => $arrayChildValueValue) {
+              $recordElement->addChild($arrayChildValueName, $arrayChildValueValue);
+            }
+          } else {
+            // todo: fix in recursive version
+          }
+        }
+      } else {
+        $result->addChild($name, $value);
+      }
     }
 
     $dump = print_r($xml->asXML(), true);
