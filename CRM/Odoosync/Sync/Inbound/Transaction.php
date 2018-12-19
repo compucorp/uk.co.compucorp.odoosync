@@ -15,12 +15,9 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
     'error_message' => ''
   ];
 
-  /**
-   * Validated params
-   *
-   * @var array
-   */
-  private $validatedParams = [];
+  private $validatedCommonParams = [];
+
+  private $validatedTransactionParamsList = [];
 
   /**
    * Starts transaction sync from Odoo
@@ -61,7 +58,19 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
     if (isset($response->params->param->value->struct->financial_trxn)) {
       foreach ($response->params->param->value->struct->financial_trxn as $param) {
         if (!empty($param->name) && !empty($param->value)) {
-          $parsedData[(string) $param->name] = (string) $param->value;
+          if (isset($param->value->list->record)) {
+            $parsedRecords = [];
+            foreach ($param->value->list->record as $record) {
+              $parsedRecord = [];
+              foreach ($record->param as $listParam) {
+                $parsedRecord[(string) $listParam->name] = (string) $listParam->value;
+              }
+              $parsedRecords[] = $parsedRecord;
+            }
+            $parsedData[(string) $param->name] = $parsedRecords;
+          } else {
+            $parsedData[(string) $param->name] = (string) $param->value;
+          }
         }
       }
     }
@@ -81,13 +90,11 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
    */
   private function validateParams($params) {
     $fields = [
-      "total_amount",
       "trxn_date",
       "invoice_id",
       "currency",
-      "credit_account_code",
       "contribution_status",
-      "to_financial_account_name"
+      "to_financial_account_name",
     ];
 
     $validParam = [];
@@ -103,11 +110,34 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
       }
     }
 
+    if (!empty($params['transactions'])) {
+      $validParam['transactions'] = $params['transactions'];
+    } else {
+      $this->syncResponse['is_error'] = 1;
+      $this->syncResponse['error_message'] .= ts("transactions is a required field");
+      return;
+    }
+
+    foreach ($validParam['transactions'] as &$transaction) {
+      $fields = [
+        'credit_account_code',
+        'total_amount',
+      ];
+      foreach ($fields as $fieldName) {
+        if (isset($transaction[$fieldName])) {
+          $transaction[$fieldName] = trim($transaction[$fieldName]);
+        }
+        else {
+          $this->syncResponse['is_error'] = 1;
+          $this->syncResponse['error_message'] .= ts("Transaction: %1 field is required", [1 => $fieldName]);
+          return;
+        }
+      }
+    }
+
     $contributionId = $validParam['invoice_id'];
     $toFinancialAccountName = $validParam['to_financial_account_name'];
-    $creditAccountCode = $validParam['credit_account_code'];
     $toFinancialAccountId = $this->getFinancialAccountIdByName($toFinancialAccountName);
-    $fromFinancialAccountId = $this->getFinancialAccountIdByCode($creditAccountCode);
     $contributionStatusId = $this->getContributionStatusId($validParam['contribution_status']);
 
     if (!$this->isContributionExist($contributionId)) {
@@ -121,24 +151,30 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
       $this->syncResponse['error_message'] .= ts("Financial account (with 'name' = '%1') doesn't exist.", [1 => $toFinancialAccountName]);
     }
 
-    if (!$fromFinancialAccountId) {
-      $this->syncResponse['is_error'] = 1;
-      $this->syncResponse['error_message'] .= ts("Financial account (with 'accounting code' = '%1') doesn't exist.", [1 => $fromFinancialAccountId]);
-    }
-
     if (!$contributionStatusId) {
       $this->syncResponse['is_error'] = 1;
       $this->syncResponse['error_message'] .= ts("Contribution status '%1' doesn't exist.", [1 => $validParam['contribution_status']]);
+    }
+
+    foreach ($validParam['transactions'] as $transactionRecord) {
+      $fromFinancialAccountId = $this->getFinancialAccountIdByCode($transactionRecord['credit_account_code']);
+      if (!$fromFinancialAccountId) {
+        $this->syncResponse['is_error'] = 1;
+        $this->syncResponse['error_message'] .= ts("Financial account (with 'accounting code' = '%1') doesn't exist.", [1 => $fromFinancialAccountId]);
+      }
+
+      $this->validatedTransactionParamsList[] = [
+        'from_financial_account_id' => $fromFinancialAccountId,
+        'total_amount' => $transactionRecord['total_amount'],
+      ];
     }
 
     if ($this->syncResponse['is_error'] === 1) {
       return;
     }
 
-    $this->validatedParams =  [
+    $this->validatedCommonParams  =  [
       'to_financial_account_id' => $toFinancialAccountId,
-      'from_financial_account_id' => $fromFinancialAccountId,
-      'total_amount' => $validParam['total_amount'],
       'trxn_date' => CRM_Odoosync_Common_Date::convertTimestampToDate($validParam['trxn_date']),
       'currency' => $validParam['currency'],
       'contribution_id' => $contributionId,
@@ -238,29 +274,35 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
    * Creates transaction
    */
   private function syncTransactions() {
-    $financialTrxnId = $this->createFinancialTrxn();
+    foreach ($this->validatedTransactionParamsList as $transactionParams) {
+      $financialTrxnId = $this->createFinancialTrxn($transactionParams);
 
-    if (!$financialTrxnId ) {
-      $this->syncResponse['is_error'] = 1;
-      $this->syncResponse['error_message'] .= ts("Can't create financial transaction.");
-      return;
+      if (!$financialTrxnId) {
+        $this->syncResponse['is_error'] = 1;
+        $this->syncResponse['error_message'] .= ts("Can't create financial transaction.");
+        return;
+      }
+
+      $this->createEntityFinancialTrxn($financialTrxnId, $transactionParams['total_amount']);
+
+      $this->syncResponse['transactions'][] = [
+        'id' => $financialTrxnId,
+        'timestamp' =>  time(),
+      ];
     }
 
-    $this->createEntityFinancialTrxn($financialTrxnId);
     $this->updateContributionStatus();
-
-    $this->syncResponse['transaction_id'] = $financialTrxnId;
-    $this->syncResponse['timestamp'] = time();
   }
 
   /**
    * Creates connect transaction to 'financial item'
    *
    * @param $financialTrxnId
+   * @param $amount
    *
    * @return bool
    */
-  private function createEntityFinancialTrxn($financialTrxnId) {
+  private function createEntityFinancialTrxn($financialTrxnId, $amount) {
     $financialItemId = $this->getFinancialItemId();
     if (!$financialItemId) {
       return FALSE;
@@ -271,7 +313,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
         'entity_table' => 'civicrm_financial_item',
         'entity_id' => $financialItemId,
         'financial_trxn_id' => $financialTrxnId,
-        'amount' =>  $this->validatedParams['total_amount']
+        'amount' =>  $amount,
       ]);
 
       return (int) $entityFinancialTrxn['id'];
@@ -298,7 +340,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
         AND line_item.entity_table = 'civicrm_contribution'
         AND financial_item.entity_table = 'civicrm_line_item'
 	  ";
-    $dao = CRM_Core_DAO::executeQuery($query, [1 => [$this->validatedParams['contribution_id'], 'Integer']]);
+    $dao = CRM_Core_DAO::executeQuery($query, [1 => [$this->validatedCommonParams['contribution_id'], 'Integer']]);
 
     while ($dao->fetch()) {
       return (int) $dao->financial_item_id;
@@ -311,14 +353,16 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
   /**
    * Creates financial transaction
    *
+   * @param array $transactionParams
+   *
    * @return bool|int
    */
-  private function createFinancialTrxn() {
+  private function createFinancialTrxn($transactionParams) {
     try {
-      $params = array_merge($this->validatedParams, [
+      $params = array_merge($this->validatedCommonParams, [
         'is_payment' => 1,
-        'net_amount' => $this->validatedParams['total_amount']
-      ]);
+        'net_amount' => $transactionParams['amount']
+      ], $transactionParams);
       $financialTrxn = civicrm_api3('FinancialTrxn', 'create', $params);
 
       return (int) $financialTrxn["id"];
@@ -334,7 +378,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
   private function updateContributionStatus() {
     $currentContributionStatus = $this->getCurrentContributionStatus();
 
-    if ($currentContributionStatus == $this->validatedParams['contribution_status_id']) {
+    if ($currentContributionStatus == $this->validatedCommonParams['contribution_status_id']) {
       return;
     }
 
@@ -345,8 +389,8 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
     ";
 
     CRM_Core_DAO::executeQuery($query, [
-      1 => [$this->validatedParams['contribution_id'], 'Integer'],
-      2 => [$this->validatedParams['contribution_status_id'], 'String'],
+      1 => [$this->validatedCommonParams['contribution_id'], 'Integer'],
+      2 => [$this->validatedCommonParams['contribution_status_id'], 'String'],
     ]);
   }
 
@@ -356,7 +400,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
   private function getCurrentContributionStatus() {
     return civicrm_api3('Contribution', 'getvalue', [
       'return' => "contribution_status_id",
-      'id' => $this->validatedParams['contribution_id']
+      'id' => $this->validatedCommonParams['contribution_id']
     ]);
   }
 
@@ -368,7 +412,17 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
     $result = $xml->addChild('Result');
 
     foreach ($this->syncResponse as $name => $value) {
-      $result->addChild($name, $value);
+      if(is_array($value)) {
+        $arrayParent = $result->addChild($name);
+        foreach ($value as $arrayChildValue) {
+          $recordElement = $arrayParent->addChild('record');
+          foreach ($arrayChildValue as $arrayChildValueName => $arrayChildValueValue) {
+            $recordElement->addChild($arrayChildValueName, $arrayChildValueValue);
+          }
+        }
+      } else {
+        $result->addChild($name, $value);
+      }
     }
 
     echo $xml->asXML();
