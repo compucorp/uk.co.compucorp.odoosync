@@ -94,7 +94,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
       "invoice_id",
       "currency",
       "contribution_status",
-      "from_financial_account_code",
+      "to_financial_account_name",
     ];
 
     $validParam = [];
@@ -120,7 +120,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
 
     foreach ($validParam['transactions'] as &$transaction) {
       $fields = [
-        'account_code',
+        'credit_account_code',
         'total_amount',
       ];
       foreach ($fields as $fieldName) {
@@ -136,8 +136,8 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
     }
 
     $contributionId = $validParam['invoice_id'];
-    $fromFinancialAccountCode = $validParam['from_financial_account_code'];
-    $fromFinancialAccountId = $this->getFinancialAccountIdByCode($fromFinancialAccountCode);
+    $toFinancialAccountName = $validParam['to_financial_account_name'];
+    $toFinancialAccountId = $this->getFinancialAccountIdByName($toFinancialAccountName);
     $contributionStatusId = $this->getContributionStatusId($validParam['contribution_status']);
 
     if (!$this->isContributionExist($contributionId)) {
@@ -146,9 +146,9 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
       return;
     }
 
-    if (!$fromFinancialAccountId) {
+    if (!$toFinancialAccountId) {
       $this->syncResponse['is_error'] = 1;
-      $this->syncResponse['error_message'] .= ts("Financial account (with 'name' = '%1') doesn't exist.", [1 => $fromFinancialAccountId]);
+      $this->syncResponse['error_message'] .= ts("Financial account (with 'name' = '%1') doesn't exist.", [1 => $toFinancialAccountName]);
     }
 
     if (!$contributionStatusId) {
@@ -157,14 +157,14 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
     }
 
     foreach ($validParam['transactions'] as $transactionRecord) {
-      $toFinancialAccountId = $this->getFinancialAccountIdByCode($transactionRecord['account_code']);
-      if (!$toFinancialAccountId) {
+      $fromFinancialAccountId = $this->getFinancialAccountIdByCode($transactionRecord['credit_account_code']);
+      if (!$fromFinancialAccountId) {
         $this->syncResponse['is_error'] = 1;
-        $this->syncResponse['error_message'] .= ts("Financial account (with 'accounting code' = '%1') doesn't exist.", [1 => $toFinancialAccountId]);
+        $this->syncResponse['error_message'] .= ts("Financial account (with 'accounting code' = '%1') doesn't exist.", [1 => $fromFinancialAccountId]);
       }
 
       $this->validatedTransactionParamsList[] = [
-        'to_financial_account_id' => $toFinancialAccountId,
+        'from_financial_account_id' => $fromFinancialAccountId,
         'total_amount' => $transactionRecord['total_amount'],
       ];
     }
@@ -174,7 +174,7 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
     }
 
     $this->validatedCommonParams  =  [
-      'from_financial_account_id' => $fromFinancialAccountId,
+      'to_financial_account_id' => $toFinancialAccountId,
       'trxn_date' => CRM_Odoosync_Common_Date::convertTimestampToDate($validParam['trxn_date']),
       'currency' => $validParam['currency'],
       'contribution_id' => $contributionId,
@@ -182,6 +182,27 @@ class CRM_Odoosync_Sync_Inbound_Transaction {
       'payment_instrument_id' => "Cash",
       'contribution_status_id' => $contributionStatusId
     ];
+  }
+
+  /**
+   * Gets financial account id by 'name'
+   *
+   * @param string $financialAccountName
+   *
+   * @return array|bool
+   */
+  private function getFinancialAccountIdByName($financialAccountName) {
+    try {
+      $financialAccount = civicrm_api3('FinancialAccount', 'getvalue', [
+        'return' => "id",
+        'name' => $financialAccountName,
+      ]);
+
+      return $financialAccount;
+    }
+    catch (CiviCRM_API3_Exception $e) {
+      return FALSE;
+    }
   }
 
   /**
