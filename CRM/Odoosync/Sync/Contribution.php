@@ -92,8 +92,10 @@ class CRM_Odoosync_Sync_Contribution extends CRM_Odoosync_Sync_BaseHandler {
    */
   private function handleSuccessResponse($creditNoteNumber, $invoiceNumber, $timestamp) {
     $this->setJobLog(ts('Sync with success. Contribution id = %1.', [1 => $this->syncContributionId]));
+    $responseHandlerLog = [];
     $responseHandler = new CRM_Odoosync_Sync_Contribution_ResponseHandler();
-    $responseHandler->handleSuccess($this->syncContributionId, $creditNoteNumber, $invoiceNumber, $timestamp);
+    $responseHandler->handleSuccess($this->syncContributionId, $creditNoteNumber, $invoiceNumber, $timestamp,$responseHandlerLog);
+    $this->setlog($responseHandlerLog);
     $this->setLog(ts('Successful sync. Contribution data updated.'));
   }
 
@@ -107,16 +109,18 @@ class CRM_Odoosync_Sync_Contribution extends CRM_Odoosync_Sync_BaseHandler {
    */
   private function handleErrorResponse($errorMessage, $timestamp) {
     $this->setJobLog(ts('Sync with error. Contribution id = %1.', [1 => $this->syncContributionId]));
-
+    $responseHandlerLog = [];
     $responseHandler = new CRM_Odoosync_Sync_Contribution_ResponseHandler();
     $isReachedRetryThreshold = $responseHandler->handleError(
       $errorMessage,
       $this->setting['odoosync_retry_threshold'],
       $this->syncContributionId,
-      $timestamp
+      $timestamp,
+      $responseHandlerLog
     );
     $this->setLog(ts('Sync with error. Contribution data updated.'));
     $this->setLog($errorMessage);
+    $this->setLog($responseHandlerLog);
 
     if ($isReachedRetryThreshold) {
       $this->setLog(ts("Reached retry threshold counter. 'Sync Status' marked as 'Sync failed. Prepare sending errors to emails.'"));
