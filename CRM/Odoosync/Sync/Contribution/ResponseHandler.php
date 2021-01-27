@@ -12,10 +12,11 @@ class CRM_Odoosync_Sync_Contribution_ResponseHandler {
    * @param $creditNoteNumber
    * @param $invoiceNumber
    * @param $timestamp
+   * @param $log
    *
-   * @throws \CiviCRM_API3_Exception
+   * @throws CiviCRM_API3_Exception
    */
-  public function handleSuccess($contributionId, $creditNoteNumber, $invoiceNumber, $timestamp) {
+  public function handleSuccess($contributionId, $creditNoteNumber, $invoiceNumber, $timestamp, &$log) {
     $syncStatusId = CRM_Odoosync_Common_OptionValue::getOptionValueID('odoo_sync_status', 'synced');
     $mysqlDate = $this->getMysqlDate($timestamp);
 
@@ -51,10 +52,18 @@ class CRM_Odoosync_Sync_Contribution_ResponseHandler {
       sync_info.last_retry = NULL,
       sync_info.retry_count = 0,
       sync_info.error_log = NULL
-      WHERE entity_id = %1 
+      WHERE entity_id = %1
     ";
 
-    CRM_Core_DAO::executeQuery($query, $paramQuery);
+    $queryResult =CRM_Core_DAO::executeQuery($query, $paramQuery);
+
+    $log['handleSuccess'] = [
+      'contribution_id' => $contributionId,
+      'query_parameters' => $paramQuery,
+      'query_statement' => $query,
+      'query_result' => $queryResult,
+    ];
+
   }
 
   /**
@@ -63,13 +72,13 @@ class CRM_Odoosync_Sync_Contribution_ResponseHandler {
    * @param string $errorMessage
    * @param int $retryThreshold
    * @param $contributionId
-   *
    * @param $timestamp
+   * @param $log
    *
    * @return bool
-   * @throws \CiviCRM_API3_Exception
+   * @throws CiviCRM_API3_Exception
    */
-  public function handleError($errorMessage, $retryThreshold, $contributionId, $timestamp) {
+  public function handleError($errorMessage, $retryThreshold, $contributionId, $timestamp, &$log) {
     $retryCount = $this->getRetryCount($contributionId);
     $newRetryCount = $retryCount + 1;
     $isReachedRetryThreshold = ($newRetryCount >= $retryThreshold);
@@ -106,7 +115,15 @@ class CRM_Odoosync_Sync_Contribution_ResponseHandler {
       ";
     }
 
-    CRM_Core_DAO::executeQuery($query, $queryParam);
+    $queryResult = CRM_Core_DAO::executeQuery($query, $queryParam);
+
+    $log['handleError'] = [
+      'contribution_id' => $contributionId,
+      'query_parameters' => $queryParam,
+      'query_statement' => $query,
+      'query_result' => $queryResult,
+      'is_reached_retry_threshold' => $isReachedRetryThreshold,
+    ];
 
     return $isReachedRetryThreshold;
   }
