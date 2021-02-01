@@ -170,7 +170,6 @@ function odoosync_civicrm_post($op, $objectName, $objectId, &$objectRef) {
   //lineItem
   if ($objectName == 'LineItem'
     && ($op == 'create' || $op == 'edit' || $op == 'delete')) {
-    $objectRef->find(TRUE);
     if(!empty($objectRef->contribution_id)) {
       $lineItem = new CRM_Odoosync_Hook_Post_Contribution_LineItem($op, $objectName, $objectId, $objectRef);
       $lineItem->process();
