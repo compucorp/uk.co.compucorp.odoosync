@@ -191,7 +191,7 @@ function odoosync_civicrm_post($op, $objectName, $objectId, &$objectRef) {
       || $objectName == 'Phone'
       || $objectName == 'Website')
     && ($op == 'create' || $op == 'edit' || $op == 'delete');
-  if ($isContactSubEntityOperation) {
+  if ($isContactSubEntityOperation && !empty($objectRef->contact_id)) {
     $contact = new CRM_Odoosync_Hook_Post_Contact_SubEntity($op, $objectName, $objectId, $objectRef);
     $contact->process();
   }
