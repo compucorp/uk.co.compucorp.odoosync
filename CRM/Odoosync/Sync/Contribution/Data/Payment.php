@@ -63,8 +63,6 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
     $paymentItems = [];
 
     while ($paymentItemsDao->fetch()) {
-      $paymentDate = CRM_Odoosync_Common_Date::convertDateToTimestamp($paymentItemsDao->payment_date);
-      $paymentDateWithTimezone = $paymentDate + (new DateTime())->getOffset();
       $paymentItems[] = [
         [
           'name' => 'status',
@@ -88,8 +86,8 @@ class CRM_Odoosync_Sync_Contribution_Data_Payment extends CRM_Odoosync_Sync_Cont
         ],
         [
           'name' => 'payment_date',
-          'type' => 'int',
-          'value' => $paymentDateWithTimezone
+          'type' => 'string',
+          'value' => (new DateTime($paymentItemsDao->payment_date))->format('Y-m-d')
         ],
         [
           'name' => 'communication',

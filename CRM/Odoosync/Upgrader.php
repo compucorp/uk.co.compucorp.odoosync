@@ -50,7 +50,7 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
       'api_action' => 'run',
       'run_frequency' => 'Hourly',
       'domain_id' => $domainID,
-      'is_active' => '1',
+      'is_active' => 0,
       'parameters' => ''
     ];
 
@@ -203,13 +203,19 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
     $defaultAction = $this->getDefaultOptionValue('odoo_partner_action_to_sync');
     $defaultStatus = $this->getDefaultOptionValue('odoo_sync_status');
 
-    $query = "
-      INSERT INTO odoo_partner_sync_information(entity_id, action_to_sync, sync_status)
-      SELECT id, %1 , %2 FROM civicrm_contact
-      WHERE id NOT IN (SELECT entity_id FROM odoo_partner_sync_information);
+    $tempDataTableQuery = "
+      CREATE TEMPORARY TABLE temp_odoo_partner_sync_data 
+      SELECT id FROM civicrm_contact WHERE id NOT IN (SELECT entity_id FROM odoo_partner_sync_information);
       ";
 
-    CRM_Core_DAO::executeQuery($query, [
+    CRM_Core_DAO::executeQuery($tempDataTableQuery);
+
+    $dataInsertionQuery = "
+      INSERT INTO odoo_partner_sync_information(entity_id, action_to_sync, sync_status) 
+      SELECT id, %1, %2 FROM temp_odoo_partner_sync_data;
+      ";
+
+    CRM_Core_DAO::executeQuery($dataInsertionQuery, [
       1 => [$defaultAction, 'Integer'],
       2 => [$defaultStatus, 'Integer'],
     ]);
@@ -359,4 +365,34 @@ class CRM_Odoosync_Upgrader extends CRM_Odoosync_Upgrader_Base {
     }
   }
 
+  public function upgrade_1000() {
+    $this->changeErrorLogCustomFieldsToMemoType();
+    return TRUE;
+  }
+
+  private function changeErrorLogCustomFieldsToMemoType() {
+    $tableNames = ['odoo_invoice_sync_information', 'odoo_partner_sync_information'];
+    $customFields = civicrm_api3('CustomField', 'get', [
+      'sequential' => 1,
+      'custom_group_id' => ['IN' => $tableNames],
+      'name' => 'error_log',
+    ]);
+
+    if ($customFields['count'] == 0) {
+      return;
+    }
+    $customFields = $customFields['values'];
+
+    foreach ($tableNames as $tableName) {
+      CRM_Core_DAO::executeQuery('ALTER TABLE ' . $tableName . ' DROP INDEX INDEX_error_log');
+    }
+
+    foreach ($customFields as $customField) {
+      civicrm_api3('CustomField', 'create', [
+        'id' => $customField['id'],
+        'data_type' => 'Memo',
+        'html_type' => 'TextArea',
+      ]);
+    }
+  }
 }

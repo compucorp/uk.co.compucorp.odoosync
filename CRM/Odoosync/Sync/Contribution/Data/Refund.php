@@ -43,13 +43,12 @@ class CRM_Odoosync_Sync_Contribution_Data_Refund extends CRM_Odoosync_Sync_Contr
     $refundItems = [];
 
     while ($dao->fetch()) {
-      $date = CRM_Odoosync_Common_Date::convertDateToTimestamp($dao->payment_date);
-      $dateWithTimezone = $date + (new DateTime())->getOffset();
+      $transactionDate = (new DateTime($dao->payment_date))->format('Y-m-d');
       $refundItems[] = [
         [
           'name' => 'date',
-          'type' => 'int',
-          'value' => $dateWithTimezone
+          'type' => 'string',
+          'value' => $transactionDate
         ],
         [
           'name' => 'description',
@@ -60,6 +59,11 @@ class CRM_Odoosync_Sync_Contribution_Data_Refund extends CRM_Odoosync_Sync_Contr
           'name' => 'status_id',
           'type' => 'string',
           'value' => $dao->status_id
+        ],
+        [
+          'name' => 'date_invoice',
+          'type' => 'string',
+          'value' => $transactionDate
         ]
       ];
     }

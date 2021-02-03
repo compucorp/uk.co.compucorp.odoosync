@@ -168,11 +168,12 @@ function odoosync_civicrm_post($op, $objectName, $objectId, &$objectRef) {
   }
 
   //lineItem
-  if ($objectName == 'LineItem' && isset($objectRef->entity_table)
-    && $objectRef->entity_table == 'civicrm_contribution'
+  if ($objectName == 'LineItem'
     && ($op == 'create' || $op == 'edit' || $op == 'delete')) {
-    $lineItem = new CRM_Odoosync_Hook_Post_Contribution_LineItem($op, $objectName, $objectId, $objectRef);
-    $lineItem->process();
+    if(!empty($objectRef->contribution_id)) {
+      $lineItem = new CRM_Odoosync_Hook_Post_Contribution_LineItem($op, $objectName, $objectId, $objectRef);
+      $lineItem->process();
+    }
   }
 
   //Organization, Individual
@@ -190,7 +191,7 @@ function odoosync_civicrm_post($op, $objectName, $objectId, &$objectRef) {
       || $objectName == 'Phone'
       || $objectName == 'Website')
     && ($op == 'create' || $op == 'edit' || $op == 'delete');
-  if ($isContactSubEntityOperation) {
+  if ($isContactSubEntityOperation && !empty($objectRef->contact_id)) {
     $contact = new CRM_Odoosync_Hook_Post_Contact_SubEntity($op, $objectName, $objectId, $objectRef);
     $contact->process();
   }
